@@ -1,0 +1,33 @@
+
+######################
+# Dataset Parameters #
+#######################
+
+# The length of each sample
+sequence_length: 10
+# The distance between 1's
+period: 4
+
+#######################
+# Training Parameters #
+#######################
+
+# The quantity of steps in the diffusion process
+T: 2000
+# Quantity of heartbeat sequences per batch
+batch_size: 1
+# Quantity of batches to train on
+num_batches: 10
+# Quantity of samples to use when approximating the loss
+num_sample_steps: 10
+# Quantity of training epochs
+epochs: 10
+# Learning rate
+lr: 0.001
+
+#################
+# Miscellaneous #
+#################
+
+# Distance between epochs where loss info is printed
+training_info_freq: 1
