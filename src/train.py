@@ -36,7 +36,7 @@ def train_diffusion_model(cfg: Config,
         for batch in batches:
             optimizer.zero_grad()
             output = diffusion_model(batch)
-            output.sum().backward()
+            output.backward()
             print('Loss: {}'.format(output.sum()))
             optimizer.step()
             avg_loss += output.sum()
@@ -46,7 +46,7 @@ def train_diffusion_model(cfg: Config,
             print('Epoch: {}'.format(i))
             print('Losses per epoch: {}'.format(losses))
             print('Sample from reverse trajectory:')
-            post_sample = diffusion_model.p_sample_loop(10)
+            post_sample = diffusion_model.p_sample(cfg.batch_size, cfg.T)
             print(post_sample)
             print('Percent of sample digits which are 1: {}'.format(post_sample.sum()/torch.numel(post_sample)))
 

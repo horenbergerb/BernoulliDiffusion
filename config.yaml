@@ -15,15 +15,15 @@ period: 4
 # The quantity of steps in the diffusion process
 T: 2000
 # Quantity of heartbeat sequences per batch
-batch_size: 1
+batch_size: 50
 # Quantity of batches to train on
-num_batches: 10
+num_batches: 1
 # Quantity of samples to use when approximating the loss
 num_sample_steps: 10
 # Quantity of training epochs
-epochs: 10
+epochs: 100
 # Learning rate
-lr: 0.001
+lr: 0.05
 
 #################
 # Miscellaneous #

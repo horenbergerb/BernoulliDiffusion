@@ -3,6 +3,10 @@ import torch
 import unittest
 
 from data import sample_heartbeat, generate_batch
+from model import ReverseModel, BinomialDiffusion
+from config import Config
+
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
 class TestData(unittest.TestCase):
@@ -39,6 +43,36 @@ class TestBinomialDiffusion(unittest.TestCase):
         '''This is done at the start of every test'''
         pass
 
+    def test_sampling_methods(self):
+        cfg = Config(sequence_length=20,
+                     period=5,
+                     T=2000,
+                     batch_size=100000,
+                     num_batches=5,
+                     num_sample_steps=10,
+                     epochs=10,
+                     lr=0.01,
+                     training_info_freq=1)
+        reverse_model = ReverseModel(cfg.sequence_length, cfg.T).to(device)
+        diffusion_model = BinomialDiffusion(reverse_model, cfg.sequence_length, cfg.num_sample_steps, cfg.T).to(device)
+
+        x_0 = generate_batch(num_samples=cfg.batch_size,
+                               period=cfg.period,
+                               sequence_length=cfg.sequence_length).to(device)
+
+        target_t = 500
+        result1 = x_0
+        for t in range(1, target_t):
+            print('beta_tilde_{}: {}'.format(t, diffusion_model.beta_tilde_t[t][0].item()))
+            print('beta_t_{}: {}'.format(t, diffusion_model.beta_t(t)))
+            result1 = diffusion_model.q_step(result1, t)
+
+        result2 = diffusion_model.q_sample(x_0, target_t)
+
+        print(torch.mean(result1))
+        print(torch.mean(result2))
+        print(diffusion_model.beta_tilde_t[target_t][0])
+        
 
 if __name__ == '__main__':
     unittest.main()
