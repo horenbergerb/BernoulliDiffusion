@@ -3,6 +3,7 @@ from torch import nn
 from torch.distributions import Binomial
 import torch.optim as optim
 from numpy.random import default_rng
+import numpy as np
 
 # KL Divergence of multivariate bernoulli distributions:
 # https://math.stackexchange.com/questions/2604566/kl-divergence-between-two-multivariate-bernoulli-distribution
@@ -104,23 +105,24 @@ class BinomialDiffusion(nn.Module):
         return -1.0*torch.sum(X_clamp * torch.log(X_clamp), dim=1)
 
 
-    def forward(self, x):
+    def forward(self, x_0):
         '''Approximates the loss via equation 13 in Deep Unsupervised Learning using Nonequilibrium Thermodynamics
         using samples from the reverse process.'''
-        total_loss = torch.zeros((x.size(dim=0),)).to(device)
+        # the monte carlo sampling is performed using the minibatch
+        total_loss = torch.zeros((x_0.size(dim=0),)).to(device)
         for t in range(1, self.T + 1):
-            # used to average the monte carlo samples
-            loss_sum = torch.zeros((x.size(dim=0),)).to(device) 
-            for sample_index in range(0, self.num_sample_steps):
-                x_0 = torch.bernoulli(torch.ones_like(x))
-                x_t = self.q_sample(x_0, t)
-                beta_t = 1.0/(self.T-t+1)
-                left_term = x_0*(1-self.beta_tilde_t[t-1]) + 0.5*self.beta_tilde_t[t-1]
-                left_term *= x_t * (1-0.5*beta_t) + (1 - x_t) * (0.5*beta_t)
-                kl_divergence = self.kl_div(left_term,
-                                            self.p_conditional_prob(x_t, t))
-                loss_sum += kl_divergence
-            total_loss += loss_sum/self.num_sample_steps
+            x_t = self.q_sample(x_0, t)
+            beta_t = self.beta_t(t)
+            left_term = x_0*(1-self.beta_tilde_t[t-1]) + 0.5*self.beta_tilde_t[t-1]
+            left_term *= x_t * (1-0.5*beta_t) + (1 - x_t) * (1.5*beta_t)
+            kl_divergence = self.kl_div(left_term,
+                                        self.p_conditional_prob(x_t, t))
+            q_start = self.q_conditional_prob_wrt_x_0(x_0, 1)
+            H_start = torch.sum((-1.0*q_start*torch.log2(q_start)) - ((1.0-q_start)*torch.log2(1.0-q_start)), dim=1)
+            q_end = self.q_conditional_prob_wrt_x_0(x_0, self.T)
+            H_end = torch.sum((-1.0*q_end*torch.log2(q_end)) - ((1.0-q_end)*torch.log2(1.0-q_end)), dim=1)
+            H_prior = (-1.0*0.5*np.log2(0.5)) - ((1.0-0.5)*np.log2(1.0-0.5))
+            total_loss += kl_divergence + H_start - H_end + H_prior
         # mult by -1 so we can minimize
         return -1.0 * torch.mean(total_loss)
 
