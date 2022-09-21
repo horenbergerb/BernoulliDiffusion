@@ -46,7 +46,7 @@ def train_diffusion_model(cfg: Config,
             print('Epoch: {}'.format(i))
             print('Losses per epoch: {}'.format(losses))
             print('Sample from reverse trajectory:')
-            post_sample = diffusion_model.p_sample(cfg.batch_size, cfg.T)
+            post_sample = diffusion_model.p_sample(cfg.batch_size)
             print(post_sample)
             print('Percent of sample digits which are 1: {}'.format(post_sample.sum()/torch.numel(post_sample)))
 

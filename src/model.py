@@ -61,13 +61,13 @@ class BinomialDiffusion(nn.Module):
         '''Performs reverse process on x from t to t-1'''
         return torch.bernoulli(self.model(x, t))
 
-    def p_sample(self, batch_size, t):
+    def p_sample(self, batch_size):
         '''Performs complete reverse process on a batch of noise'''
         init_prob = torch.empty((batch_size, self.sequence_length)).fill_(0.5).to(device)
         x = torch.bernoulli(init_prob)
 
-        for cur_t in range(2000, t-1):
-            x = self.p_sample(x, cur_t)
+        for cur_t in range(self.T, 0, -1):
+            x = torch.bernoulli(self.p_conditional_prob(x, cur_t))
         return x
 
     def beta_t(self, t):

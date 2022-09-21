@@ -23,7 +23,7 @@ num_sample_steps: 30
 # Quantity of training epochs
 epochs: 100
 # Learning rate
-lr: 0.01
+lr: 0.005
 
 #################
 # Miscellaneous #
