@@ -100,11 +100,6 @@ class BernoulliDiffusion(nn.Module):
         p_clamp = torch.clamp(p, min=0.000001, max=0.999999)
         return -1.0*torch.sum(q_clamp * torch.log(q_clamp/p_clamp) + (1-q_clamp) * torch.log((1.0-q_clamp)/(1.0-p_clamp)), dim=1)
 
-    def entropy(self, X):
-        X_clamp = torch.clamp(X, min=0.000001, max=0.999999)
-        return -1.0*torch.sum(X_clamp * torch.log(X_clamp), dim=1)
-
-
     def forward(self, x_0):
         '''Approximates the loss via equation 13 in Deep Unsupervised Learning using Nonequilibrium Thermodynamics
         using samples from the reverse process.'''
