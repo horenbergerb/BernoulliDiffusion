@@ -3,7 +3,7 @@ import torch.optim as optim
 from torch.distributions import Binomial
 
 from config import Config
-from model import BinomialDiffusion
+from model import BernoulliDiffusion
 from data import generate_batch
 
 
@@ -11,7 +11,7 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
 def train_diffusion_model(cfg: Config,
-                          diffusion_model: BinomialDiffusion) -> BinomialDiffusion:
+                          diffusion_model: BernoulliDiffusion) -> BernoulliDiffusion:
     
     optimizer = optim.SGD(diffusion_model.parameters(), lr=cfg.lr)
 
@@ -37,7 +37,6 @@ def train_diffusion_model(cfg: Config,
             optimizer.zero_grad()
             output = diffusion_model(batch)
             output.backward()
-            print('Loss: {}'.format(output.sum()))
             optimizer.step()
             avg_loss += output.sum()
         avg_loss = avg_loss / (cfg.batch_size * cfg.num_batches)

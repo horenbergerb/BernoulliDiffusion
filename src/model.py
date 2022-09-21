@@ -35,7 +35,7 @@ class ReverseModel(nn.Module):
         return x
 
 
-class BinomialDiffusion(nn.Module):
+class BernoulliDiffusion(nn.Module):
     def __init__(self, model, sequence_length, num_sample_steps, T):
         super().__init__()
 

@@ -1,7 +1,7 @@
 import torch
 
 from config import load_config
-from model import BinomialDiffusion, ReverseModel
+from model import BernoulliDiffusion, ReverseModel
 from train import train_diffusion_model
 
 
@@ -12,7 +12,7 @@ if __name__ == '__main__':
     cfg = load_config('config.yaml')
 
     reverse_model = ReverseModel(cfg.sequence_length, cfg.T).to(device)
-    diffusion_model = BinomialDiffusion(reverse_model, cfg.sequence_length, cfg.num_sample_steps, cfg.T).to(device)
+    diffusion_model = BernoulliDiffusion(reverse_model, cfg.sequence_length, cfg.num_sample_steps, cfg.T).to(device)
 
     print('Batch of samples from reverse trajectory before training:')
     pre_sample = diffusion_model.p_sample(cfg.batch_size)

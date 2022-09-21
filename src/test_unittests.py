@@ -3,7 +3,7 @@ import torch
 import unittest
 
 from data import sample_heartbeat, generate_batch
-from model import ReverseModel, BinomialDiffusion
+from model import ReverseModel, BernoulliDiffusion
 from config import Config
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -54,7 +54,7 @@ class TestBinomialDiffusion(unittest.TestCase):
                      lr=0.01,
                      training_info_freq=1)
         reverse_model = ReverseModel(cfg.sequence_length, cfg.T).to(device)
-        diffusion_model = BinomialDiffusion(reverse_model, cfg.sequence_length, cfg.num_sample_steps, cfg.T).to(device)
+        diffusion_model = BernoulliDiffusion(reverse_model, cfg.sequence_length, cfg.num_sample_steps, cfg.T).to(device)
 
         x_0 = generate_batch(num_samples=cfg.batch_size,
                                period=cfg.period,
