@@ -120,26 +120,3 @@ class BernoulliDiffusion(nn.Module):
             total_loss += kl_divergence + H_start - H_end + H_prior
         # mult by -1 so we can minimize
         return -1.0 * torch.mean(total_loss)
-
-    def eq_11_forward(self, x):
-        '''Approximates loss via equation 11 in Deep Unsupervised Learning using Nonequilibrium Thermodynamics
-        using samples from the reverse process.
-        In practice, the product term ends up vanishing for each sample,
-        so this loss isn't really useful'''
-        #avg_loss is the monte carlo approximation of loss
-        avg_loss = torch.zeros((x.size(dim=0),)).to(device)
-        for n in range(self.num_sample_steps):
-            print('n: {}'.format(n))
-            cur_loss = torch.zeros((x.size(dim=0),)).fill_(1.0).to(device)
-            x_prev = x
-            for t in range(0, self.T):
-                # sample forward using q
-                x_next, q_prob = self.q_sample(x_prev, t)
-                print(self.p_prob(x_next, x_prev, t+1))
-                cur_loss *= self.p_prob(x_next, x_prev, t+1)/q_prob
-                print(cur_loss)
-                x_prev = x_next
-            avg_loss += cur_loss
-        avg_loss = avg_loss/self.num_sample_steps
-        # Negative sign so we can minimize loss
-        return -1.0 * torch.log(avg_loss)
