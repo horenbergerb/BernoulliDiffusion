@@ -2,15 +2,16 @@
 
 ## About
 
-This is an implementation of the diffusion machine learning algorithm described in [Deep Unsupervised Learning using Nonequilibrium Thermodynamics](https://arxiv.org/abs/1503.03585). It trains a diffusion model on heartbeat data.
+This is an implementation of the diffusion machine learning algorithm described in [Deep Unsupervised Learning using Nonequilibrium Thermodynamics](https://arxiv.org/abs/1503.03585). Notably, this implementation is designed to train on binary-valued data. It uses a Bernoulli distribution to generate noise instead of a Gaussian.
+
+The model in `model.py` reflects the architecture described in the original paper. The training loop is stored in `train.py`.
 
 The tools in `data.py` generate "heartbeat data," periodic data with a random shift. Here are two examples of heartbeat data with period 5 and sequence_length 20:
 ```
     [0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,0,0]
     [1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0]
 ```
-
-The model in `model.py` reflects the architecture described in the original paper. The training loop is stored in `train.py`.
+You can train the model to generate samples of heartbeat data.
 
 `main.py` is the heart of this repository and initializes training based on the configuration in `config.yaml`.
 
@@ -27,3 +28,9 @@ python src/main.py
 ```
 
 You can configure the session by editing the settings in `config.yaml`
+
+You can run the unit tests from the root directory with the following command:
+
+```
+python -m unittest src/test_unittests.py
+```

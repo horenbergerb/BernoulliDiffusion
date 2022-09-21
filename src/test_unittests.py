@@ -2,9 +2,9 @@ import torch
 
 import unittest
 
-from data import sample_heartbeat, generate_batch
-from model import ReverseModel, BernoulliDiffusion
-from config import Config
+from src.data import sample_heartbeat, generate_batch
+from src.model import ReverseModel, BernoulliDiffusion
+from src.config import Config
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
