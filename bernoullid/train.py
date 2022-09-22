@@ -2,9 +2,9 @@ import torch
 import torch.optim as optim
 from torch.distributions import Binomial
 
-from config import Config
-from model import BernoulliDiffusion
-from data import generate_batch
+from bernoullid.config import Config
+from bernoullid.model import BernoulliDiffusion
+from bernoullid.data import generate_batch
 
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")

@@ -1,8 +1,8 @@
 import torch
 
-from config import load_config
-from model import BernoulliDiffusion, ReverseModel
-from train import train_diffusion_model
+from bernoullid.config import load_config
+from bernoullid.model import BernoulliDiffusion, ReverseModel
+from bernoullid.train import train_diffusion_model
 
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
