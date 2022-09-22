@@ -6,6 +6,7 @@ from config import Config
 from model import BernoulliDiffusion
 from data import generate_batch
 
+import pickle
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -49,4 +50,7 @@ def train_diffusion_model(cfg: Config,
             print(post_sample)
             print('Percent of sample digits which are 1: {}'.format(post_sample.sum()/torch.numel(post_sample)))
 
+    # save the model to file
+    pickle.dump(diffusion_model, open(cfg.filename, 'wb'))
+    
     return diffusion_model

@@ -12,6 +12,7 @@ class Config:
     epochs: int
     lr: float
     training_info_freq: int
+    filename: str
 
 
 def load_config(cfg_dir: str) -> Config:
