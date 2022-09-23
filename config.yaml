@@ -25,7 +25,7 @@ epochs: 100
 # Learning rate
 lr: 0.005
 # File to save trained model
-filename: "trained_model.sav"
+filename: "trained_model.pt"
 
 #################
 # Miscellaneous #
