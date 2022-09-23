@@ -24,6 +24,8 @@ num_sample_steps: 30
 epochs: 100
 # Learning rate
 lr: 0.005
+# File to save trained model
+filename: "trained_model.pt"
 
 #################
 # Miscellaneous #

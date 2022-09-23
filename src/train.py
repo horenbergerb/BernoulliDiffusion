@@ -6,7 +6,6 @@ from config import Config
 from model import BernoulliDiffusion
 from data import generate_batch
 
-
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
@@ -49,4 +48,7 @@ def train_diffusion_model(cfg: Config,
             print(post_sample)
             print('Percent of sample digits which are 1: {}'.format(post_sample.sum()/torch.numel(post_sample)))
 
+    # save the model to file
+    torch.save(diffusion_model, cfg.filename)
+    
     return diffusion_model
