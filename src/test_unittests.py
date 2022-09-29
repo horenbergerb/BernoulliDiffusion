@@ -44,7 +44,7 @@ class TestBinomialDiffusion(unittest.TestCase):
         self.cfg = Config(sequence_length=20,
                           period=5,
                           T=2000,
-                          batch_size=1000000,
+                          batch_size=100000,
                           num_batches=1,
                           num_sample_steps=10,
                           epochs=10,
