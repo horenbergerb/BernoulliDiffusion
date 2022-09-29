@@ -54,25 +54,17 @@ class TestBinomialDiffusion(unittest.TestCase):
         self.reverse_model = ReverseModel(self.cfg.sequence_length, self.cfg.T).to(device)
         self.diffusion_model = BernoulliDiffusion(self.reverse_model, self.cfg.sequence_length, self.cfg.num_sample_steps, self.cfg.T).to(device)
 
-    def test_beta_tilde_T_is_1(self):
-        '''We expect that beta_tilde_T will always be 1.0'''
+    def test_known_values_of_beta_tilde(self):
+        '''We expect that beta_tilde_t[T] will always be 1.0
+        and beta_tilde_t[1] will be beta_t(1)'''
 
         for T in [10,1000,2000,5000]:
             self.cfg.T = T
             reverse_model = ReverseModel(self.cfg.sequence_length, self.cfg.T).to(device)
             diffusion_model = BernoulliDiffusion(reverse_model, self.cfg.sequence_length, self.cfg.num_sample_steps, self.cfg.T).to(device)
             print('T: {} beta_tilde_T: {}'.format(T, diffusion_model.beta_tilde_t[T][0].item()))
-            self.assertAlmostEqual(1.0, diffusion_model.beta_tilde_t[T][0].item())
-
-    def test_beta_tilde_1_is_beta_t(self):
-        '''We expect that beta_tilde_1 will always be beta_t'''
-
-        for T in [10,1000,2000,5000]:
-            self.cfg.T = T
-            reverse_model = ReverseModel(self.cfg.sequence_length, self.cfg.T).to(device)
-            diffusion_model = BernoulliDiffusion(reverse_model, self.cfg.sequence_length, self.cfg.num_sample_steps, self.cfg.T).to(device)
-            print('T: {} beta_tilde_T: {}'.format(T, diffusion_model.beta_tilde_t[T][0].item()))
-            self.assertAlmostEqual(diffusion_model.beta_t(1), diffusion_model.beta_tilde_t[T][0].item())
+            self.assertAlmostEqual(1.0, diffusion_model.beta_tilde_t[T][0].item(), 5)
+            self.assertAlmostEqual(diffusion_model.beta_t(1), diffusion_model.beta_tilde_t[1][0].item(), 5)
 
     def test_sampling_wrt_x_0(self):
         '''p(1) for a digit of x_0 is 21/100. Bit flip prob for x_t is beta_tilde_t.
@@ -87,7 +79,7 @@ class TestBinomialDiffusion(unittest.TestCase):
             result = self.diffusion_model.q_sample(x_0, t)
             result = torch.mean(result).item()
 
-            beta_tilde_t = self.diffusion_model.beta_tilde_t[t]
+            beta_tilde_t = self.diffusion_model.beta_tilde_t[t][0].item()
             expectation = (21.0/100.0*(1.0-beta_tilde_t)) + (79.0/100.0*(beta_tilde_t))
             
             err_msg = '{} and {} are not almost equal'.format(result, expectation)
