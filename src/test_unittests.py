@@ -51,8 +51,8 @@ class TestBinomialDiffusion(unittest.TestCase):
                           lr=0.01,
                           training_info_freq=1,
                           filename='unittest_model.pt')
-        self.reverse_model = ReverseModel(cfg.sequence_length, cfg.T).to(device)
-        self.diffusion_model = BernoulliDiffusion(reverse_model, cfg.sequence_length, cfg.num_sample_steps, cfg.T).to(device)
+        self.reverse_model = ReverseModel(self.cfg.sequence_length, self.cfg.T).to(device)
+        self.diffusion_model = BernoulliDiffusion(reverse_model, self.cfg.sequence_length, self.cfg.num_sample_steps, self.cfg.T).to(device)
 
     def test_beta_tilde_T_is_correct(self):
         '''We expect that beta_tilde_T will always be 0.5'''
@@ -61,8 +61,8 @@ class TestBinomialDiffusion(unittest.TestCase):
             self.cfg.T = T
             reverse_model = ReverseModel(self.cfg.sequence_length, self.cfg.T).to(device)
             diffusion_model = BernoulliDiffusion(reverse_model, self.cfg.sequence_length, self.cfg.num_sample_steps, self.cfg.T).to(device)
-            print('T: {} beta_tilde_T: {}'.format(T, diffusion_model.beta_tilde_t[t][0].item()))
-            self.assertEqual(0.5, diffusion_model.beta_tilde_t[t][0].item())
+            print('T: {} beta_tilde_T: {}'.format(T, diffusion_model.beta_tilde_t[T][0].item()))
+            self.assertEqual(0.5, diffusion_model.beta_tilde_t[T][0].item())
     
     def test_sampling_methods_agree(self):
         x_0 = generate_batch(num_samples=self.cfg.batch_size,
