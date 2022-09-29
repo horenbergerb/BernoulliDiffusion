@@ -52,7 +52,8 @@ class TestBinomialDiffusion(unittest.TestCase):
                      num_sample_steps=10,
                      epochs=10,
                      lr=0.01,
-                     training_info_freq=1)
+                     training_info_freq=1,
+                     filename='unittest_model.pt')
         reverse_model = ReverseModel(cfg.sequence_length, cfg.T).to(device)
         diffusion_model = BernoulliDiffusion(reverse_model, cfg.sequence_length, cfg.num_sample_steps, cfg.T).to(device)
 
