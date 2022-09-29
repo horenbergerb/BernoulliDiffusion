@@ -35,9 +35,9 @@ class TestData(unittest.TestCase):
             self.assertGreaterEqual(batch.sum(),3*10)
             
     def test_expected_ratio_of_ones(self):
-        '''The probability of 1 should be 21/100 for a batch of period=5, sequence_length=20'''
+        '''The probability of 1 should be 20/100 for a batch of period=5, sequence_length=20'''
         batch = generate_batch(num_samples=100000, period=5, sequence_length=20)
-        self.assertAlmostEqual(torch.mean(batch).item(), 21.0/100.0) 
+        self.assertAlmostEqual(torch.mean(batch).item(), 20.0/100.0) 
 
             
 class TestBinomialDiffusion(unittest.TestCase):
@@ -71,10 +71,10 @@ class TestBinomialDiffusion(unittest.TestCase):
             self.assertAlmostEqual(diffusion_model.beta_t(1), diffusion_model.beta_tilde_t[1][0].item(), 5)
 
     def test_sampling_wrt_x_0(self):
-        '''p(1) for a digit of x_0 is 21/100. Bit flip prob for x_t is beta_tilde_t.
-        1->1: 1/5*(1-beta_tilde_t)
-        0->1: 4/5*(beta_tilde_t)
-        p(1) for digits of x_t = (21/100*(1-beta_tilde_t)) + (79/100*(beta_tilde_t))'''
+        '''p(1) for a digit of x_0 is 20/100. Bit flip prob for x_t is beta_tilde_t.
+        p(1->1): 1/5*(1-beta_tilde_t)
+        p(0->1): 4/5*(beta_tilde_t)
+        p(1) for digits of x_t = (20/100*(1-beta_tilde_t)) + (80/100*(beta_tilde_t))'''
         x_0 = generate_batch(num_samples=self.cfg.batch_size,
                                period=self.cfg.period,
                                sequence_length=self.cfg.sequence_length).to(device)
@@ -84,7 +84,7 @@ class TestBinomialDiffusion(unittest.TestCase):
             result = torch.mean(result).item()
 
             beta_tilde_t = self.diffusion_model.beta_tilde_t[t][0].item()
-            expectation = (21.0/100.0*(1.0-beta_tilde_t)) + (79.0/100.0*(beta_tilde_t))
+            expectation = (20.0/100.0*(1.0-beta_tilde_t)) + (80.0/100.0*(beta_tilde_t))
             
             err_msg = 'beta_tilde_t: {}, {} and {} are not almost equal'.format(beta_tilde_t, result, expectation)
 
