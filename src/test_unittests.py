@@ -41,42 +41,42 @@ class TestBinomialDiffusion(unittest.TestCase):
 
     def setUp(self):
         '''This is done at the start of every test'''
-        cfg = Config(sequence_length=20,
-                     period=5,
-                     T=2000,
-                     batch_size=100000,
-                     num_batches=1,
-                     num_sample_steps=10,
-                     epochs=10,
-                     lr=0.01,
-                     training_info_freq=1,
-                     filename='unittest_model.pt')
-        reverse_model = ReverseModel(cfg.sequence_length, cfg.T).to(device)
-        diffusion_model = BernoulliDiffusion(reverse_model, cfg.sequence_length, cfg.num_sample_steps, cfg.T).to(device)
+        self.cfg = Config(sequence_length=20,
+                          period=5,
+                          T=2000,
+                          batch_size=100000,
+                          num_batches=1,
+                          num_sample_steps=10,
+                          epochs=10,
+                          lr=0.01,
+                          training_info_freq=1,
+                          filename='unittest_model.pt')
+        self.reverse_model = ReverseModel(cfg.sequence_length, cfg.T).to(device)
+        self.diffusion_model = BernoulliDiffusion(reverse_model, cfg.sequence_length, cfg.num_sample_steps, cfg.T).to(device)
 
     def test_beta_tilde_T_is_correct(self):
         '''We expect that beta_tilde_T will always be 0.5'''
 
         for T in [10,1000,2000,5000]:
-            cfg.T = T
-            reverse_model = ReverseModel(cfg.sequence_length, cfg.T).to(device)
-            diffusion_model = BernoulliDiffusion(reverse_model, cfg.sequence_length, cfg.num_sample_steps, cfg.T).to(device)
+            self.cfg.T = T
+            reverse_model = ReverseModel(self.cfg.sequence_length, self.cfg.T).to(device)
+            diffusion_model = BernoulliDiffusion(reverse_model, self.cfg.sequence_length, self.cfg.num_sample_steps, self.cfg.T).to(device)
             print('T: {} beta_tilde_T: {}'.format(T, diffusion_model.beta_tilde_t[t][0].item()))
             self.assertEqual(0.5, diffusion_model.beta_tilde_t[t][0].item())
     
     def test_sampling_methods_agree(self):
-        x_0 = generate_batch(num_samples=cfg.batch_size,
-                               period=cfg.period,
-                               sequence_length=cfg.sequence_length).to(device)
+        x_0 = generate_batch(num_samples=self.cfg.batch_size,
+                               period=self.cfg.period,
+                               sequence_length=self.cfg.sequence_length).to(device)
 
         target_t = 500
         result1 = x_0
         for t in range(0, target_t):
             # print('beta_tilde_{}: {}'.format(t, diffusion_model.beta_tilde_t[t][0].item()))
             # print('beta_t_{}: {}'.format(t, diffusion_model.beta_t(t)))
-            result1 = diffusion_model.q_step(result1, t)
+            result1 = self.diffusion_model.q_step(result1, t)
 
-        result2 = diffusion_model.q_sample(x_0, target_t)
+        result2 = self.diffusion_model.q_sample(x_0, target_t)
 
         result1 = torch.mean(result1)
         result2 = torch.mean(result2)
