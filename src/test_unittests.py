@@ -44,7 +44,7 @@ class TestBinomialDiffusion(unittest.TestCase):
         self.cfg = Config(sequence_length=20,
                           period=5,
                           T=2000,
-                          batch_size=100000,
+                          batch_size=10000000,
                           num_batches=1,
                           num_sample_steps=10,
                           epochs=10,
@@ -82,7 +82,7 @@ class TestBinomialDiffusion(unittest.TestCase):
             beta_tilde_t = self.diffusion_model.beta_tilde_t[t][0].item()
             expectation = (21.0/100.0*(1.0-beta_tilde_t)) + (79.0/100.0*(beta_tilde_t))
             
-            err_msg = '{} and {} are not almost equal'.format(result, expectation)
+            err_msg = 'beta_tilde_t: {}, {} and {} are not almost equal'.format(beta_tilde_t, result, expectation)
 
             self.assertAlmostEqual(result, expectation, 5, err_msg)
 
