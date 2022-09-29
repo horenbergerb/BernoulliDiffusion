@@ -71,10 +71,10 @@ class TestBinomialDiffusion(unittest.TestCase):
             self.assertAlmostEqual(diffusion_model.beta_t(1), diffusion_model.beta_tilde_t[1][0].item(), 5)
 
     def test_sampling_wrt_x_0(self):
-        '''p(1) for a digit of x_0 is 20/100. Bit flip prob for x_t is beta_tilde_t.
-        p(1->1): 1/5*(1-beta_tilde_t)
-        p(0->1): 4/5*(beta_tilde_t)
-        p(1) for digits of x_t = (20/100*(1-beta_tilde_t)) + (80/100*(beta_tilde_t))'''
+        '''p(1) for a digit of x_0 is 20/100. Bit flip prob for x_t is 0.5*beta_tilde_t.
+        p(1->1): 1/5*(1-0.5*beta_tilde_t)
+        p(0->1): 4/5*(0.5*beta_tilde_t)
+        p(1) for digits of x_t = (20/100*(1-0.5*beta_tilde_t)) + (80/100*(0.5*beta_tilde_t))'''
         x_0 = generate_batch(num_samples=self.cfg.batch_size,
                                period=self.cfg.period,
                                sequence_length=self.cfg.sequence_length).to(device)
@@ -84,7 +84,7 @@ class TestBinomialDiffusion(unittest.TestCase):
             result = torch.mean(result).item()
 
             beta_tilde_t = self.diffusion_model.beta_tilde_t[t][0].item()
-            expectation = (20.0/100.0*(1.0-beta_tilde_t)) + (80.0/100.0*(beta_tilde_t))
+            expectation = (20.0/100.0*(1.0-0.5*beta_tilde_t)) + (80.0/100.0*(0.5*beta_tilde_t))
             
             err_msg = 'beta_tilde_t: {}, {} and {} are not almost equal'.format(beta_tilde_t, result, expectation)
 
