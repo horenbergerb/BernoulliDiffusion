@@ -82,7 +82,6 @@ class BernoulliDiffusion(nn.Module):
     def q_conditional_prob_wrt_x_0(self, x_0, t):
         '''Returns the probabilities of the Bernoulli variables for observing samples of x_t
         given x_0, i.e. q(x_t|x_0)'''
-
         beta_tilde_t = self.beta_tilde_t[t].expand(x_0.size())
         return ((x_0 * (1.0 - beta_tilde_t)) + 0.5 * beta_tilde_t)
 
@@ -100,6 +99,16 @@ class BernoulliDiffusion(nn.Module):
         p_clamp = torch.clamp(p, min=0.000001, max=0.999999)
         return -1.0*torch.sum(q_clamp * torch.log(q_clamp/p_clamp) + (1-q_clamp) * torch.log((1.0-q_clamp)/(1.0-p_clamp)), dim=1)
 
+    def entropy_terms(self, x_0):
+        q_start = self.q_conditional_prob_wrt_x_0(x_0, 1)
+        q_end = self.q_conditional_prob_wrt_x_0(x_0, self.T)
+
+        H_start = torch.sum((-1.0*q_start*torch.log2(q_start)) - ((1.0-q_start)*torch.log2(1.0-q_start)), dim=1)
+        H_end = torch.sum((-1.0*q_end*torch.log2(q_end)) - ((1.0-q_end)*torch.log2(1.0-q_end)), dim=1)
+        H_prior = (-1.0*0.5*np.log2(0.5)) - ((1.0-0.5)*np.log2(1.0-0.5))
+
+        return H_start, H_end, H_prior
+    
     def forward(self, x_0):
         '''Approximates the loss via equation 13 in Deep Unsupervised Learning using Nonequilibrium Thermodynamics
         using samples from the reverse process.'''
@@ -112,11 +121,9 @@ class BernoulliDiffusion(nn.Module):
             left_term *= x_t * (1-0.5*beta_t) + (1 - x_t) * (1.5*beta_t)
             kl_divergence = self.kl_div(left_term,
                                         self.p_conditional_prob(x_t, t))
-            q_start = self.q_conditional_prob_wrt_x_0(x_0, 1)
-            H_start = torch.sum((-1.0*q_start*torch.log2(q_start)) - ((1.0-q_start)*torch.log2(1.0-q_start)), dim=1)
-            q_end = self.q_conditional_prob_wrt_x_0(x_0, self.T)
-            H_end = torch.sum((-1.0*q_end*torch.log2(q_end)) - ((1.0-q_end)*torch.log2(1.0-q_end)), dim=1)
-            H_prior = (-1.0*0.5*np.log2(0.5)) - ((1.0-0.5)*np.log2(1.0-0.5))
+            
+            H_start, H_end, H_prior = self.entropy_terms(x_0)
+
             total_loss += kl_divergence + H_start - H_end + H_prior
         # mult by -1 so we can minimize
         return -1.0 * torch.mean(total_loss)
