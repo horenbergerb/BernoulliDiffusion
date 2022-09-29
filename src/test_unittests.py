@@ -52,7 +52,7 @@ class TestBinomialDiffusion(unittest.TestCase):
                           training_info_freq=1,
                           filename='unittest_model.pt')
         self.reverse_model = ReverseModel(self.cfg.sequence_length, self.cfg.T).to(device)
-        self.diffusion_model = BernoulliDiffusion(reverse_model, self.cfg.sequence_length, self.cfg.num_sample_steps, self.cfg.T).to(device)
+        self.diffusion_model = BernoulliDiffusion(self.reverse_model, self.cfg.sequence_length, self.cfg.num_sample_steps, self.cfg.T).to(device)
 
     def test_beta_tilde_T_is_correct(self):
         '''We expect that beta_tilde_T will always be 0.5'''
