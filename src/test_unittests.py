@@ -55,16 +55,18 @@ class TestBinomialDiffusion(unittest.TestCase):
         self.diffusion_model = BernoulliDiffusion(self.reverse_model, self.cfg.sequence_length, self.cfg.num_sample_steps, self.cfg.T).to(device)
 
     def test_beta_tilde_T_is_correct(self):
-        '''We expect that beta_tilde_T will always be 0.5'''
+        '''We expect that beta_tilde_T will always be 1.0'''
 
         for T in [10,1000,2000,5000]:
             self.cfg.T = T
             reverse_model = ReverseModel(self.cfg.sequence_length, self.cfg.T).to(device)
             diffusion_model = BernoulliDiffusion(reverse_model, self.cfg.sequence_length, self.cfg.num_sample_steps, self.cfg.T).to(device)
             print('T: {} beta_tilde_T: {}'.format(T, diffusion_model.beta_tilde_t[T][0].item()))
-            self.assertEqual(0.5, diffusion_model.beta_tilde_t[T][0].item())
+            self.assertEqual(1.0, diffusion_model.beta_tilde_t[T][0].item())
     
     def test_sampling_methods_agree(self):
+        '''The proportion of digits which are 1 should be approximately equivalent whether we iterate sampling
+        from x_0->x_1->...->x_t or sample directly from x_t'''
         x_0 = generate_batch(num_samples=self.cfg.batch_size,
                                period=self.cfg.period,
                                sequence_length=self.cfg.sequence_length).to(device)
@@ -78,8 +80,8 @@ class TestBinomialDiffusion(unittest.TestCase):
 
         result2 = self.diffusion_model.q_sample(x_0, target_t)
 
-        result1 = torch.mean(result1)
-        result2 = torch.mean(result2)
+        result1 = torch.mean(result1).item()
+        result2 = torch.mean(result2).item()
         
         err_msg = '{} and {} are not almost equal'.format(result1, result2)
 
