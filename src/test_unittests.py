@@ -54,7 +54,7 @@ class TestBinomialDiffusion(unittest.TestCase):
         self.reverse_model = ReverseModel(self.cfg.sequence_length, self.cfg.T).to(device)
         self.diffusion_model = BernoulliDiffusion(self.reverse_model, self.cfg.sequence_length, self.cfg.num_sample_steps, self.cfg.T).to(device)
 
-    def test_beta_tilde_T_is_correct(self):
+    def test_beta_tilde_T_is_1(self):
         '''We expect that beta_tilde_T will always be 1.0'''
 
         for T in [10,1000,2000,5000]:
@@ -62,8 +62,39 @@ class TestBinomialDiffusion(unittest.TestCase):
             reverse_model = ReverseModel(self.cfg.sequence_length, self.cfg.T).to(device)
             diffusion_model = BernoulliDiffusion(reverse_model, self.cfg.sequence_length, self.cfg.num_sample_steps, self.cfg.T).to(device)
             print('T: {} beta_tilde_T: {}'.format(T, diffusion_model.beta_tilde_t[T][0].item()))
-            self.assertEqual(1.0, diffusion_model.beta_tilde_t[T][0].item())
-    
+            self.assertAlmostEqual(1.0, diffusion_model.beta_tilde_t[T][0].item())
+
+    def test_beta_tilde_1_is_beta_t(self):
+        '''We expect that beta_tilde_1 will always be beta_t'''
+
+        for T in [10,1000,2000,5000]:
+            self.cfg.T = T
+            reverse_model = ReverseModel(self.cfg.sequence_length, self.cfg.T).to(device)
+            diffusion_model = BernoulliDiffusion(reverse_model, self.cfg.sequence_length, self.cfg.num_sample_steps, self.cfg.T).to(device)
+            print('T: {} beta_tilde_T: {}'.format(T, diffusion_model.beta_tilde_t[T][0].item()))
+            self.assertAlmostEqual(diffusion_model.beta_t(1), diffusion_model.beta_tilde_t[T][0].item())
+
+    def test_sampling_wrt_x_0(self):
+        '''p(1) for a digit of x_0 is 21/100. Bit flip prob for x_t is beta_tilde_t.
+        1->1: 1/5*(1-beta_tilde_t)
+        0->1: 4/5*(beta_tilde_t)
+        p(1) for digits of x_t = (21/100*(1-beta_tilde_t)) + (79/100*(beta_tilde_t))'''
+        x_0 = generate_batch(num_samples=self.cfg.batch_size,
+                               period=self.cfg.period,
+                               sequence_length=self.cfg.sequence_length).to(device)
+
+        for t in [10, 100, 500, 1000, 2000]:
+            result = self.diffusion_model.q_sample(x_0, t)
+            result = torch.mean(result).item()
+
+            beta_tilde_t = self.diffusion_model.beta_tilde_t[t]
+            expectation = (21.0/100.0*(1.0-beta_tilde_t)) + (79.0/100.0*(beta_tilde_t))
+            
+            err_msg = '{} and {} are not almost equal'.format(result, expectation)
+
+            self.assertAlmostEqual(result, expectation, 5, err_msg)
+
+            
     def test_sampling_methods_agree(self):
         '''The proportion of digits which are 1 should be approximately equivalent whether we iterate sampling
         from x_0->x_1->...->x_t or sample directly from x_t'''
