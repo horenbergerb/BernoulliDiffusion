@@ -12,8 +12,8 @@ def sample_heartbeat(period: int = 5, sequence_length: int = 20) -> torch.Tensor
     [1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0]
     '''
     sample = torch.zeros(sequence_length)
-    sample[::period] = 1
-    sample = torch.roll(sample, rng.integers(sequence_length))
+    offset = rng.integers(period)
+    sample[offset::period] = 1
     return sample
 
 
