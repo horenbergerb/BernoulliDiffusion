@@ -37,7 +37,7 @@ class TestData(unittest.TestCase):
     def test_expected_ratio_of_ones(self):
         '''The probability of 1 should be 21/100 for a batch of period=5, sequence_length=20'''
         batch = generate_batch(num_samples=100000, period=5, sequence_length=20)
-        self.assertApproxEqual(torch.mean(batch).item(), 21.0/100.0) 
+        self.assertAlmostEqual(torch.mean(batch).item(), 21.0/100.0) 
 
             
 class TestBinomialDiffusion(unittest.TestCase):
