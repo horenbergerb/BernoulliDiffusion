@@ -5,7 +5,7 @@ import statistics
 
 from BernoulliDiffusion.data import sample_heartbeat, generate_batch
 from BernoulliDiffusion.model import ReverseModel, BernoulliDiffusionModel
-from BernoulliDiffusion.config import Config
+from BernoulliDiffusion.config import load_config, Config
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -15,16 +15,7 @@ class TestBinomialDiffusion(unittest.TestCase):
 
     def setUp(self):
         '''This is done at the start of every test'''
-        self.cfg = Config(sequence_length=20,
-                          period=5,
-                          T=2000,
-                          batch_size=100000,
-                          num_batches=1,
-                          num_sample_steps=10,
-                          epochs=10,
-                          lr=0.01,
-                          training_info_freq=1,
-                          filename='unittest_model.pt')
+        self.cfg = load_config('BernoulliDiffusion/tests/test_config.yaml')
         self.reverse_model = ReverseModel(self.cfg.sequence_length, self.cfg.T).to(device)
         self.diffusion_model = BernoulliDiffusionModel(self.reverse_model, self.cfg.sequence_length, self.cfg.num_sample_steps, self.cfg.T).to(device)
 
@@ -60,7 +51,7 @@ class TestBinomialDiffusion(unittest.TestCase):
             results.append(result)
 
         err_msg = 'beta_tilde_t: {}, {} and {} are not almost equal'.format(beta_tilde_t, result, expectation)
-        self.assertAlmostEqual(statistics.fmean(results), expectation, 5, err_msg)
+        self.assertAlmostEqual(statistics.fmean(results), expectation, 4, err_msg)
 
             
     def test_sampling_methods_agree(self):
@@ -91,7 +82,7 @@ class TestBinomialDiffusion(unittest.TestCase):
             results2.append(result2)
         
         err_msg = '{} and {} are not almost equal'.format(statistics.fmean(results1), statistics.fmean(results2))
-        self.assertAlmostEqual(statistics.fmean(results1), statistics.fmean(results2), 5, err_msg)
+        self.assertAlmostEqual(statistics.fmean(results1), statistics.fmean(results2), 4, err_msg)
                         
 
 if __name__ == '__main__':
