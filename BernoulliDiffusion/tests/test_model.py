@@ -3,42 +3,11 @@ import torch
 import unittest
 import statistics
 
-from src.data import sample_heartbeat, generate_batch
-from src.model import ReverseModel, BernoulliDiffusion
-from src.config import Config
+from BernoulliDiffusion.data import sample_heartbeat, generate_batch
+from BernoulliDiffusion.model import ReverseModel, BernoulliDiffusionModel
+from BernoulliDiffusion.config import Config
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-
-
-class TestData(unittest.TestCase):
-    '''Tests functions from the data.py file'''
-
-    def test_sample_heartbeat(self):
-        '''Deterministic sanity checks'''
-        # 10 random samples is a pretty thorough check
-        for i in range(10):
-            sample = sample_heartbeat(period=5, sequence_length=20)
-
-            self.assertEqual(sample.size(), torch.Size([20]))
-            # There should only be 3 or 4 occurences of 1 in any sample
-            self.assertLessEqual(sample.sum(), 4)
-            self.assertGreaterEqual(sample.sum(),3)
-
-    def test_generate_batch(self):
-        '''Deterministic sanity checks'''
-        # 10 random samples is a pretty thorough check
-        for i in range(10):
-            batch = generate_batch(num_samples=10, period=5, sequence_length=20)
-
-            self.assertEqual(batch.size(), torch.Size([10,20]))
-            # There should only be 3 or 4 occurences of 1 in any sample
-            self.assertLessEqual(batch.sum(), 4*10)
-            self.assertGreaterEqual(batch.sum(),3*10)
-            
-    def test_expected_ratio_of_ones(self):
-        '''The probability of 1 should be 20/100 for a batch of period=5, sequence_length=20'''
-        batch = generate_batch(num_samples=100000, period=5, sequence_length=20)
-        self.assertAlmostEqual(torch.mean(batch).item(), 20.0/100.0) 
 
             
 class TestBinomialDiffusion(unittest.TestCase):
@@ -57,7 +26,7 @@ class TestBinomialDiffusion(unittest.TestCase):
                           training_info_freq=1,
                           filename='unittest_model.pt')
         self.reverse_model = ReverseModel(self.cfg.sequence_length, self.cfg.T).to(device)
-        self.diffusion_model = BernoulliDiffusion(self.reverse_model, self.cfg.sequence_length, self.cfg.num_sample_steps, self.cfg.T).to(device)
+        self.diffusion_model = BernoulliDiffusionModel(self.reverse_model, self.cfg.sequence_length, self.cfg.num_sample_steps, self.cfg.T).to(device)
 
     def test_known_values_of_beta_tilde(self):
         '''We expect that beta_tilde_t[T] will always be 1.0
@@ -66,7 +35,7 @@ class TestBinomialDiffusion(unittest.TestCase):
         for T in [10,1000,2000,5000]:
             self.cfg.T = T
             reverse_model = ReverseModel(self.cfg.sequence_length, self.cfg.T).to(device)
-            diffusion_model = BernoulliDiffusion(reverse_model, self.cfg.sequence_length, self.cfg.num_sample_steps, self.cfg.T).to(device)
+            diffusion_model = BernoulliDiffusionModel(reverse_model, self.cfg.sequence_length, self.cfg.num_sample_steps, self.cfg.T).to(device)
             self.assertAlmostEqual(1.0, diffusion_model.beta_tilde_t[T][0].item(), 5)
             self.assertAlmostEqual(diffusion_model.beta_t(1), diffusion_model.beta_tilde_t[1][0].item(), 5)
 
