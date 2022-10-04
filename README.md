@@ -38,3 +38,9 @@ python -m unittest discover BernoulliDiffusion/tests/
 # run a particular file of unit tests
 python -m unittest BernoulliDiffusion/tests/test_filename.py
 ```
+
+## Mathematics and Derivations
+
+I wrote a whole blog post about the derivations which you can find [here](https://horenbergerb.github.io/2022/10/03/bernoulliderivations.html).
+
+It contains notes on all of the trickier topics that I encountered while writing this code.
