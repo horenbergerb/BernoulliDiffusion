@@ -4,22 +4,20 @@
 
 This is an implementation of the diffusion machine learning algorithm described in [Deep Unsupervised Learning using Nonequilibrium Thermodynamics](https://arxiv.org/abs/1503.03585). Notably, this implementation is designed to train on binary-valued data. It uses a Bernoulli distribution to generate noise instead of a Gaussian.
 
-The model in `model.py` reflects the architecture described in the original paper. The training loop is stored in `train.py`.
+This repo generates a toy dataset called "heartbeat data," which is just period binary sequences of a fixed period and lengths. Here are two examples of period 5 and length 20 heartbeats:
 
-The tools in `data.py` generate "heartbeat data," periodic data with a random shift. Here are two examples of heartbeat data with period 5 and sequence_length 20:
 ```
     [0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,0,0]
     [1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0]
 ```
-You can train the model to generate samples of heartbeat data.
 
-`main.py` is the heart of this repository and initializes training based on the configuration in `config.yaml`.
+The model trains on this heartbeat data and learns to generate samples via diffusion:
 
-Finally, there are various unit tests in `test_unittests.py`.
+![](docs/sample_evolution_throughout_training.gif)
 
 ## Running this code
 
-Make sure to create a Python3 environment and install the requirements in `requirements.txt`.
+Make sure to create a Python3 environment and install the requirements in requirements.txt.
 
 You can train a diffusion model on heartbeat data by simply executing the following command from the root directory of the project:
 
@@ -27,9 +25,11 @@ You can train a diffusion model on heartbeat data by simply executing the follow
 python main.py
 ```
 
-You can configure the session by editing the settings in `config.yaml`
+The resulting model along with useful information about training will be stored in a folder named "results".
 
-You can run the unit tests from the root directory with the following command:
+You can change various settings in config.yaml.
+
+You can run unit tests from the root directory with the following commands:
 
 ```
 # run all unit tests
@@ -38,6 +38,17 @@ python -m unittest discover BernoulliDiffusion/tests/
 # run a particular file of unit tests
 python -m unittest BernoulliDiffusion/tests/test_filename.py
 ```
+
+## Overview of Files
+
+* `main.py`: Run this to train a model according to the settings specified in the config
+* `model.py`: Implements the architecture described in the original paper
+* `train.py`: Contains Trainer, a class which trains the model
+* `data.py`: Generates "heartbeat data," which is the toy dataset the model learns. It is periodic binary data with a random shift.
+* `math_utils.py`: Contains some of the more elaborate calculations that are used by the diffusion model
+* `plotting_utils.py` Contains some helper functions for making plots and animations
+* Everything under `tests`: Unit tests to ensure various calculations and tools haven't broken
+
 
 ## Mathematics and Derivations
 

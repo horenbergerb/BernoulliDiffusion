@@ -5,11 +5,7 @@ import torch.optim as optim
 from numpy.random import default_rng
 import numpy as np
 
-from BernoulliDiffusion.utils.math_utils import kl_div, entropy
-
-# KL Divergence of multivariate bernoulli distributions:
-# https://math.stackexchange.com/questions/2604566/kl-divergence-between-two-multivariate-bernoulli-distribution
-
+from BernoulliDiffusion.utils.math_utils import kl_div, entropy_of_q_conditional, entropy_of_prior
 
 rng = default_rng()
 
@@ -54,6 +50,10 @@ class BernoulliDiffusionModel(nn.Module):
             self.beta_tilde_t.append((self.beta_tilde_t[cur_t-1] + self.beta_t(cur_t) - (self.beta_t(cur_t)*self.beta_tilde_t[cur_t-1])))
         self.beta_tilde_t = torch.stack(self.beta_tilde_t)
 
+        self.H_start = entropy_of_q_conditional(self.sequence_length, self.beta_tilde_t[1,0].item())
+        self.H_end = entropy_of_q_conditional(self.sequence_length, self.beta_tilde_t[self.T, 0].item())
+        self.H_prior = entropy_of_prior(self.sequence_length)
+
     def p_conditional_prob(self, x_t, t):
         '''Returns the probabilities of the Bernoulli variables for the reverse process from t to t-1,
         i.e. p(x_(t-1)|x_t)'''
@@ -63,10 +63,11 @@ class BernoulliDiffusionModel(nn.Module):
         '''Performs reverse process on x from t to t-1'''
         return torch.bernoulli(self.model(x, t))
 
-    def p_sample(self, batch_size):
+    def p_sample(self, batch_size, x=None):
         '''Performs complete reverse process on a batch of noise'''
-        init_prob = torch.empty((batch_size, self.sequence_length)).fill_(0.5).to(device)
-        x = torch.bernoulli(init_prob)
+        if x is None:
+            init_prob = torch.empty((batch_size, self.sequence_length)).fill_(0.5).to(device)
+            x = torch.bernoulli(init_prob)
 
         for cur_t in range(self.T, 0, -1):
             x = torch.bernoulli(self.p_conditional_prob(x, cur_t))
@@ -96,16 +97,6 @@ class BernoulliDiffusionModel(nn.Module):
     def q_sample(self, x_0, t):
         '''Returns a sample x_t given input x_0'''
         return torch.bernoulli(self.q_conditional_prob_wrt_x_0(x_0, t))
-
-    def entropy_terms(self, x_0):
-        q_start = self.q_conditional_prob_wrt_x_0(x_0, 1)
-        q_end = self.q_conditional_prob_wrt_x_0(x_0, self.T)
-
-        H_start = entropy(q_start)
-        H_end = entropy(q_end)
-        H_prior = entropy(torch.ones_like(q_start)*0.5)
-
-        return H_start, H_end, H_prior
     
     def forward(self, x_0):
         '''Approximates the loss via equation 13 in Deep Unsupervised Learning using Nonequilibrium Thermodynamics
@@ -115,13 +106,11 @@ class BernoulliDiffusionModel(nn.Module):
         for t in range(1, self.T + 1):
             x_t = self.q_sample(x_0, t)
             beta_t = self.beta_t(t)
-            left_term = x_0*(1-self.beta_tilde_t[t-1]) + 0.5*self.beta_tilde_t[t-1]
-            left_term *= x_t * (1-0.5*beta_t) + (1 - x_t) * (1.5*beta_t)
-            kl_divergence = kl_div(left_term,
+            posterior = x_0*(1-self.beta_tilde_t[t-1]) + 0.5*self.beta_tilde_t[t-1]
+            posterior *= x_t * (1-0.5*beta_t) + (1 - x_t) * (1.5*beta_t)
+            kl_divergence = kl_div(posterior,
                                    self.p_conditional_prob(x_t, t))
-            
-            H_start, H_end, H_prior = self.entropy_terms(x_0)
 
-            total_loss += kl_divergence + H_start - H_end + H_prior
+            total_loss += kl_divergence + self.H_start - self.H_end + self.H_prior
         # mult by -1 so we can minimize
         return -1.0 * torch.mean(total_loss)

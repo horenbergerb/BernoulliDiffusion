@@ -12,7 +12,8 @@ class Config:
     epochs: int
     lr: float
     training_info_freq: int
-    filename: str
+    save_every_n_epochs: int
+    output_dir: str
 
 
 def load_config(cfg_dir: str) -> Config:
