@@ -12,14 +12,20 @@ def sample_heartbeat(period: int = 5, sequence_length: int = 20) -> torch.Tensor
     [1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0]
     '''
     sample = torch.zeros(sequence_length)
-    sample[::period] = 1
-    sample = torch.roll(sample, rng.integers(sequence_length))
+    offset = rng.integers(period)
+    sample[offset::period] = 1
     return sample
 
-
 def generate_batch(num_samples: int = 10,
-                     period: int = 5,
-                     sequence_length: int = 20) -> torch.Tensor:
+                   period: int = 5,
+                   sequence_length: int = 20) -> torch.Tensor:
     '''Creates a batch of heartbeat sequences'''
-    x_0 = [sample_heartbeat(period, sequence_length) for index in range(num_samples)]
-    return torch.vstack(x_0)
+    data = []
+    for offset in range(0, period):
+            cur_data = torch.zeros(sequence_length)
+            cur_data[offset::period] = 1
+            data.append(cur_data)
+    data = torch.vstack(data)
+
+    data_selections = rng.integers(offset, size=num_samples)
+    return data[data_selections]

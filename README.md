@@ -24,7 +24,7 @@ Make sure to create a Python3 environment and install the requirements in `requi
 You can train a diffusion model on heartbeat data by simply executing the following command from the root directory of the project:
 
 ```
-python src/main.py
+python main.py
 ```
 
 You can configure the session by editing the settings in `config.yaml`
@@ -32,5 +32,15 @@ You can configure the session by editing the settings in `config.yaml`
 You can run the unit tests from the root directory with the following command:
 
 ```
-python -m unittest src/test_unittests.py
+# run all unit tests
+python -m unittest discover BernoulliDiffusion/tests/
+
+# run a particular file of unit tests
+python -m unittest BernoulliDiffusion/tests/test_filename.py
 ```
+
+## Mathematics and Derivations
+
+I wrote a whole blog post about the derivations which you can find [here](https://horenbergerb.github.io/2022/10/03/bernoulliderivations.html).
+
+It contains notes on all of the trickier topics that I encountered while writing this code.
