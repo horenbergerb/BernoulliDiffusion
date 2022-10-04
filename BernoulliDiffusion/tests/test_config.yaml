@@ -24,8 +24,10 @@ num_sample_steps: 10
 epochs: 10
 # Learning rate
 lr: 0.005
+# How frequently to checkpoint the model
+save_every_n_epochs: 10
 # File to save trained model
-filename: "unittest_model.pt"
+output_dir: "unittest_results"
 
 #################
 # Miscellaneous #

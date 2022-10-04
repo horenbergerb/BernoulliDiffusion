@@ -4,9 +4,9 @@
 #######################
 
 # The length of each sample
-sequence_length: 10
+sequence_length: 20
 # The distance between 1's
-period: 4
+period: 5
 
 #######################
 # Training Parameters #
@@ -21,11 +21,13 @@ num_batches: 5
 # Quantity of samples to use when approximating the loss
 num_sample_steps: 30
 # Quantity of training epochs
-epochs: 100
+epochs: 20
 # Learning rate
 lr: 0.005
+# How frequently to checkpoint the model
+save_every_n_epochs: 10
 # File to save trained model
-filename: "trained_model.pt"
+output_dir: "results"
 
 #################
 # Miscellaneous #
