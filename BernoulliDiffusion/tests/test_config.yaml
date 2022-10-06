@@ -1,37 +1,26 @@
+model:
+  # The quantity of steps in the diffusion process
+  T: 2000
+  # Quantity of samples to use when approximating the loss
+  num_sample_steps: 10
 
-######################
-# Dataset Parameters #
-#######################
+training:
+  # The distance between 1's
+  period: 5
+  # Quantity of training epochs
+  epochs: 100
+  # Learning rate
+  lr: 0.005
+  # How frequently to checkpoint the model
+  save_every_n_epochs: 10
+  # The quantity of examples to print during training
+  num_examples: 10
+  # Distance between epochs where loss info and example generations are printed
+  training_info_freq: 1
+  # File to save trained model
+  output_dir: "unittest_results"
 
-# The length of each sample
-sequence_length: 20
-# The distance between 1's
-period: 5
-
-#######################
-# Training Parameters #
-#######################
-
-# The quantity of steps in the diffusion process
-T: 2000
-# Quantity of heartbeat sequences per batch
-batch_size: 100000
-# Quantity of batches to train on
-num_batches: 1
-# Quantity of samples to use when approximating the loss
-num_sample_steps: 10
-# Quantity of training epochs
-epochs: 10
-# Learning rate
-lr: 0.005
-# How frequently to checkpoint the model
-save_every_n_epochs: 10
-# File to save trained model
-output_dir: "unittest_results"
-
-#################
-# Miscellaneous #
-#################
-
-# Distance between epochs where loss info is printed
-training_info_freq: 1
+data:
+  data_dir: 'data/heartbeat_len_1000_per_100'
+  # Quantity of heartbeat sequences per batch
+  batch_size: 100000
