@@ -34,10 +34,10 @@ class ReverseModel(nn.Module):
 
 
 class BernoulliDiffusionModel(nn.Module):
-    def __init__(self, model, sequence_length, num_sample_steps, T):
+    def __init__(self, sequence_length, num_sample_steps, T):
         super().__init__()
 
-        self.model = model
+        self.model = ReverseModel(sequence_length, T).to(device)
         
         self.sequence_length = sequence_length
         self.num_sample_steps = num_sample_steps

@@ -14,6 +14,7 @@ def entropy_of_q_conditional(sequence_length, beta_tilde_t):
     for k in range(0, sequence_length+1):
         n_choose_k = comb(sequence_length, k)
         prob = pow((1-0.5*beta_tilde_t), k) * pow(0.5*beta_tilde_t, sequence_length-k)
+        prob = max(prob, 0.000001)
         cur_entropy = n_choose_k * prob * log10(prob)
         total_entropy += cur_entropy
     return -1.0 * total_entropy
@@ -23,6 +24,7 @@ def entropy_of_prior(sequence_length):
     for k in range(0, sequence_length+1):
         n_choose_k = comb(sequence_length, k)
         prob = pow((1-0.5*0.5), k) * pow(0.5*0.5, sequence_length-k)
+        prob = max(prob, 0.000001)
         cur_entropy = n_choose_k * prob * log10(prob)
         total_entropy += cur_entropy
     return -1.0 * total_entropy
