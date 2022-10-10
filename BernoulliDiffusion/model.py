@@ -59,10 +59,12 @@ class BernoulliDiffusionModel(nn.Module):
         i.e. p(x_(t-1)|x_t)'''
         return self.model(x_t, t)
 
+    @torch.no_grad()
     def p_step(self, x, t):
         '''Performs reverse process on x from t to t-1'''
         return torch.bernoulli(self.model(x, t))
 
+    @torch.no_grad()
     def p_sample(self, batch_size, x=None):
         '''Performs complete reverse process on a batch of noise'''
         if x is None:
@@ -89,6 +91,7 @@ class BernoulliDiffusionModel(nn.Module):
         beta_tilde_t = self.beta_tilde_t[t].expand(x_0.size())
         return ((x_0 * (1.0 - beta_tilde_t)) + 0.5 * beta_tilde_t)
 
+    @torch.no_grad()
     def q_step(self, x, t):
         '''Performs forward process on x from t to t+1'''
         probs = self.q_conditional_prob(x, t)

@@ -5,8 +5,6 @@ model:
   num_sample_steps: 10
 
 training:
-  # The distance between 1's
-  period: 5
   # Quantity of training epochs
   epochs: 100
   # Learning rate

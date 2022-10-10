@@ -3,19 +3,15 @@ from torch.distributions import Binomial
 
 import os
 
+from BernoulliDiffusion.utils.data_utils import load_data_from_file
+
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 class DataLoader:
     def __init__(self, cfg):
         self.cfg = cfg
 
-        self.data = []
-
-        with open(os.path.join(self.cfg.data_dir, 'train.txt'), 'r') as f:
-            for line in f:
-                self.data.append(torch.FloatTensor([float(x) for x in line.strip()]).to(device))
-        
-        self.data = torch.vstack(self.data)
+        self.data = load_data_from_file(os.path.join(self.cfg.data_dir, 'train.txt'))
         self.num_data = self.data.size()[0]
         self.sequence_length = self.data.size()[1]
 

@@ -12,6 +12,15 @@ def plot_loss(epochs, losses, save_dir, filename='loss_curve.png'):
     plt.savefig(os.path.join(save_dir, filename))
     plt.clf()
 
+def plot_validation_proportions(epochs, proportions, save_dir, filename='validation.png'):
+    for key, item in proportions.items():
+        plt.plot(epochs, item, label=key)
+    plt.title('Validation Proportions')
+    plt.xlabel('Epoch')
+    plt.ylabel('Proportion')
+    plt.legend()
+    plt.savefig(os.path.join(save_dir, filename))
+    plt.clf()
 
 def plot_evolution(examples, save_dir, step_name='Step', filename='evolution.gif'):
     '''Given a sequence of batches of samples, this animates their evolution.
@@ -35,3 +44,5 @@ def plot_evolution(examples, save_dir, step_name='Step', filename='evolution.gif
                         frames=len(examples), interval=300, repeat=True) 
     
     ani.save(os.path.join(save_dir, filename), writer='imagemagick', fps=2)
+
+    fig.clf()
