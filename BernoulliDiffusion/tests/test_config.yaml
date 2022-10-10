@@ -18,6 +18,11 @@ training:
   # File to save trained model
   output_dir: "unittest_results"
 
+  # The total quantity of samples to use when validating the model
+  num_val_samples: 128
+  # the quantity of samples to take at a time when validating the model
+  val_batch_size: 32
+
 data:
   data_dir: 'data/heartbeat_len_1000_per_100'
   # Quantity of heartbeat sequences per batch
