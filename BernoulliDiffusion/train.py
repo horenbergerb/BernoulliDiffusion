@@ -5,24 +5,27 @@ from torch.distributions import Binomial
 import os
 import json
 
-from BernoulliDiffusion.utils.plotting_utils import plot_loss, plot_evolution
+from BernoulliDiffusion.utils.plotting_utils import plot_loss, plot_evolution, plot_validation_proportions
+
+import os
+os.environ["CUDA_LAUNCH_BLOCKING"] = "1"
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 class Trainer:
     '''Given a diffusion model and config file, this class
     trains the model from scratch and then saves the result.'''
-    def __init__(self, sequence_length: int, cfg, diffusion_model, data_loader):
+    def __init__(self, sequence_length: int, cfg, diffusion_model, data_loader, validator=None):
         self.sequence_length = sequence_length
         self.cfg = cfg
         self.diffusion_model = diffusion_model
         self.data_loader = data_loader
+        self.validator = validator
 
         self.optimizer = optim.Adam(diffusion_model.parameters(), lr=cfg.lr, betas=(0.9, 0.999), eps=1e-08, weight_decay=0, amsgrad=False)
 
-        self.losses = []
+        self.initialize_new_training_()
 
-        self.examples_per_epoch = []
         self.example_seed = Binomial(1, torch.zeros((self.cfg.num_examples, self.sequence_length)).fill_(0.5)).sample().to(device)
 
     def initialize_output_dir_(self):
@@ -38,6 +41,12 @@ class Trainer:
         out = self.diffusion_model(input)
         out.backward()
 
+        # reset all metrics of training
+        self.losses = []
+        self.examples_per_epoch = []
+
+        self.proportions = {'train': [], 'val':[], 'other':[]}
+
     def train_step_(self):
         avg_loss = 0.0
         batch_count = 0
@@ -46,10 +55,11 @@ class Trainer:
             self.optimizer.zero_grad()
             output = self.diffusion_model(batch)
             output.backward()
+            torch.nn.utils.clip_grad_norm_(self.diffusion_model.parameters(), self.cfg.clip_thresh)
             self.optimizer.step()
             batch = self.data_loader.next_minibatch()
             batch_count += 1
-            avg_loss += output
+            avg_loss += output.detach()
         avg_loss = avg_loss / batch_count
         self.losses.append(avg_loss.item())
         return avg_loss
@@ -63,6 +73,13 @@ class Trainer:
         print(post_sample)
         print('Percent of sample digits which are 1: {}'.format(post_sample.sum()/torch.numel(post_sample)))
 
+        if self.validator is not None:
+            train_count, val_count, other_count = self.validator.validate(self.diffusion_model, self.cfg.num_val_samples, self.cfg.val_batch_size)
+            self.proportions['train'].append(train_count/self.cfg.num_val_samples)
+            self.proportions['val'].append(val_count/self.cfg.num_val_samples)
+            self.proportions['other'].append(other_count/self.cfg.num_val_samples)
+            print('Train samples: {}, Val sample: {}, Other samples: {}'.format (train_count, val_count, other_count))
+
     def dump_data_to_json(self):
         results = {'losses': self.losses,
                    'examples_per_epoch': [x.tolist() for x in self.examples_per_epoch]}
@@ -70,14 +87,19 @@ class Trainer:
             json.dump(results, fp)
 
     def make_plots(self):
-        plot_loss([x for x in range(0, self.cfg.epochs)],
-                  self.losses,
+        epochs_plotted = [x * self.cfg.training_info_freq for x in range(0, self.cfg.epochs//self.cfg.training_info_freq)]
+        plot_loss(epochs_plotted,
+                  self.losses[::self.cfg.training_info_freq],
                   self.cfg.output_dir)
         numpy_examples = [x.cpu().detach().numpy() for x in self.examples_per_epoch]
-        plot_evolution(numpy_examples,
+        plot_evolution(epochs_plotted,
+                       numpy_examples,
                        self.cfg.output_dir,
                        step_name = 'Epoch',
                        filename='sample_evolution_throughout_training.gif')
+        plot_validation_proportions(epochs_plotted,
+                                    self.proportions,
+                                    self.cfg.output_dir)
 
     def train(self):
         self.initialize_output_dir_()
