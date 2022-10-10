@@ -115,5 +115,4 @@ class BernoulliDiffusionModel(nn.Module):
                                    self.p_conditional_prob(x_t, t))
 
             total_loss += kl_divergence + self.H_start - self.H_end + self.H_prior
-        # mult by -1 so we can minimize
-        return -1.0 * torch.mean(total_loss)
+        return torch.mean(total_loss)

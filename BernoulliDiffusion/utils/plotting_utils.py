@@ -22,7 +22,7 @@ def plot_validation_proportions(epochs, proportions, save_dir, filename='validat
     plt.savefig(os.path.join(save_dir, filename))
     plt.clf()
 
-def plot_evolution(examples, save_dir, step_name='Step', filename='evolution.gif'):
+def plot_evolution(epochs, examples, save_dir, step_name='Step', filename='evolution.gif'):
     '''Given a sequence of batches of samples, this animates their evolution.
     Useful for showing how a particular sample changes during training.
     Also useful for illustrating the reverse process.'''
@@ -35,7 +35,7 @@ def plot_evolution(examples, save_dir, step_name='Step', filename='evolution.gif
         return [im]
 
     def animate(i):
-        fig.suptitle(step_name + ': {}'.format(i))
+        fig.suptitle(step_name + ': {}'.format(epochs[i]))
         im.set_array(examples[i])
         return [im]
 

@@ -7,6 +7,9 @@ import json
 
 from BernoulliDiffusion.utils.plotting_utils import plot_loss, plot_evolution, plot_validation_proportions
 
+import os
+os.environ["CUDA_LAUNCH_BLOCKING"] = "1"
+
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 class Trainer:
@@ -52,6 +55,7 @@ class Trainer:
             self.optimizer.zero_grad()
             output = self.diffusion_model(batch)
             output.backward()
+            torch.nn.utils.clip_grad_norm_(self.diffusion_model.parameters(), self.cfg.clip_thresh)
             self.optimizer.step()
             batch = self.data_loader.next_minibatch()
             batch_count += 1
@@ -83,15 +87,17 @@ class Trainer:
             json.dump(results, fp)
 
     def make_plots(self):
-        plot_loss([x for x in range(0, self.cfg.epochs)],
-                  self.losses,
+        epochs_plotted = [x * self.cfg.training_info_freq for x in range(0, self.cfg.epochs//self.cfg.training_info_freq)]
+        plot_loss(epochs_plotted,
+                  self.losses[::self.cfg.training_info_freq],
                   self.cfg.output_dir)
         numpy_examples = [x.cpu().detach().numpy() for x in self.examples_per_epoch]
-        plot_evolution(numpy_examples,
+        plot_evolution(epochs_plotted,
+                       numpy_examples,
                        self.cfg.output_dir,
                        step_name = 'Epoch',
                        filename='sample_evolution_throughout_training.gif')
-        plot_validation_proportions([x for x in range(0, self.cfg.epochs)],
+        plot_validation_proportions(epochs_plotted,
                                     self.proportions,
                                     self.cfg.output_dir)
 

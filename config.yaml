@@ -10,7 +10,7 @@ training:
   # Quantity of training epochs
   epochs: 100
   # Learning rate
-  lr: 0.005
+  lr: 0.05
   # How frequently to checkpoint the model
   save_every_n_epochs: 10
   # The quantity of examples to print during training
@@ -19,13 +19,14 @@ training:
   training_info_freq: 1
   # File to save trained model
   output_dir: "results"
-
   # The total quantity of samples to use when validating the model
   num_val_samples: 1024
   # the quantity of samples to take at a time when validating the model
   val_batch_size: 64
+  # The threshold for grad_clip_norm
+  clip_thresh: 1.0
 
 data:
-  data_dir: 'data/heartbeat_len_64_per_32'
+  data_dir: 'data/heartbeat_len_20_per_5'
   # Quantity of heartbeat sequences per batch
   batch_size: 64
