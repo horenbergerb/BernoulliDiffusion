@@ -1,9 +1,7 @@
 import torch
 from math import comb, pow, log2
 
-P_MIN = 0.00000000001
-P_MAX = 0.99999999999
-eps = 1e-10
+eps = 1e-30
 
 def kl_div(q, p):
     '''KL Divergence of two multivariate Bernoulli distributions'''
@@ -15,7 +13,7 @@ def entropy_of_q_conditional(sequence_length, beta_tilde_t):
     for k in range(0, sequence_length+1):
         n_choose_k = comb(sequence_length, k)
         prob = pow((1-(0.5*beta_tilde_t)), k) * pow(0.5*beta_tilde_t, sequence_length-k)
-        cur_entropy = n_choose_k * prob * log2(prob)
+        cur_entropy = n_choose_k * prob * log2(prob + eps)
         total_entropy += cur_entropy
     return -1.0 * total_entropy
 
@@ -27,6 +25,6 @@ def entropy_of_prior(sequence_length):
     for k in range(0, sequence_length+1):
         n_choose_k = comb(sequence_length, k)
         prob = pow((1-0.5), k) * pow(0.5, sequence_length-k)
-        cur_entropy = n_choose_k * prob * log2(prob)
+        cur_entropy = n_choose_k * prob * log2(prob + eps)
         total_entropy += cur_entropy
     return -1.0 * total_entropy
