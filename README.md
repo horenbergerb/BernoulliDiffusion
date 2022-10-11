@@ -6,32 +6,73 @@ This is an implementation of the diffusion machine learning algorithm described 
 
 This model can be trained on any binary-valued data of fixed length. It will learn to generate samples which appear to be from the same distribution as the training data.
 
-This repo includes some toy datasets to train on, including "heartbeat data." Heartbeat data is described in the original paper. It's basically just periodic binary sequences with a random (uniformly-distributed) offset.
+## Setup
 
-Here are two examples of period 5 and length 20 heartbeats:
+Make sure to create a Python3 environment and install the requirements in requirements.txt:
 
 ```
-    [0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,0,0]
-    [1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0]
+python3 -m venv env
+source env/bin/activate
+pip3 install -r requirements.txt
 ```
 
-Here is an example of the model learning to generate a set of convincing heartbeats:
+## Usage
+
+### Training
+
+A working directory must be created with train.txt, val.txt, and a config.yaml file. See runs/heartbeat_len_20_per_5 for an example.
+
+Once the working directory is prepared (let's use runs/heartbeat_len_20_per_5 as an example), you can train a diffusion model by simply executing the following command from the root directory of the project:
+
+```
+python train.py runs/heartbeat_len_20_per_5
+```
+
+The resulting model, its checkpoints, and training/validation data will be stored in runs/heartbeat_len_20_per_5/results/ under a timestamped directory.
+
+#### Preparing Training Data
+
+The training data stored in train.txt should satisfy the following criteria
+
+* Each line is a single sample consisting of '1' and '0' and no other characters
+
+The val.txt file satisfies identical criteria. It should only contain samples which are not in train.txt.
+
+### Inferencing
+
+You can generate an arbitrary samples from the reverse process of a model using the following command:
+
+```
+python generate.py runs/heartbeat_len_20_per_5/results/d_10_11_2022_t_17_20/checkpoints/model_epoch_29.pt 10
+```
+
+This command generates 10 samples from one of the models trained on heartbeat data.
+
+### Using a Custom Reverse Model
+
+You can alter the model in BernoulliDiffusion/reverse_model.py, and your changes will be reflected the next time you train. After each training, the python file for the reverse model will be saved in the results directory for reference.
+
+### Validation and Analysis
+
+After training, the The results.json file will contain all relevant data from the session, such as losses and validation data.
+
+#### Validation Procedure
+
+Currently the validation procedure is very rudimentary. To validate a model, a large collection of samples are generated from the reverse process. Then, we consider what proportion of them can be found in the training data, what proportion can be found in the validation data, and what proportion is found in neither. This provides basic insights about whether the model is learning to replicate the training data and may hint at whether the model is generalizing.
+
+#### Visualizations
+
+Training also produces some data and visualizations.
+
+The first visualization is a simple loss curve:
+
+![](docs/loss_curve.png)
+
+The second visualization is a demonstration of samples produced by the same seed throughout training
 
 ![](docs/sample_evolution_throughout_training.gif)
 
-## Running this code
-
-Make sure to create a Python3 environment and install the requirements in requirements.txt.
-
-You can train a diffusion model on heartbeat data by simply executing the following command from the root directory of the project:
-
-```
-python main.py
-```
-
-The resulting model along with useful information about training will be stored in a folder named "results".
-
-You can change various settings in config.yaml.
+### Unit Tests
 
 You can run unit tests from the root directory with the following commands:
 
@@ -42,21 +83,6 @@ python -m unittest discover BernoulliDiffusion/tests/
 # run a particular file of unit tests
 python -m unittest BernoulliDiffusion/tests/test_filename.py
 ```
-
-## Training With Your Own Data
-
-Training with custom data is easy. Simply create a text file where each line is a sample. See /data/heatbeat_len_20_per_5 for an example. Then update the config and set the data_dir to your data file.
-
-## Overview of Files
-
-* `main.py`: Run this to train a model according to the settings specified in the config
-* `model.py`: Implements the architecture described in the original paper
-* `train.py`: Contains Trainer, a class which trains the model
-* `data.py`: Contains the data loader which reads the training data from a file and generates minibatches
-* `math_utils.py`: Contains some of the more elaborate calculations that are used by the diffusion model
-* `plotting_utils.py` Contains some helper functions for making plots and animations
-* Everything under `tests`: Unit tests to ensure various calculations and tools haven't broken
-
 
 ## Mathematics and Derivations
 

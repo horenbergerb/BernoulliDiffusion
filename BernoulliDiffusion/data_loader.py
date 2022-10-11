@@ -8,10 +8,12 @@ from BernoulliDiffusion.utils.data_utils import load_data_from_file
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 class DataLoader:
-    def __init__(self, cfg):
+    '''Loads training data and generates minibatches to
+    be iterated over during training.'''
+    def __init__(self, working_dir, cfg):
         self.cfg = cfg
 
-        self.data = load_data_from_file(os.path.join(self.cfg.data_dir, 'train.txt'))
+        self.data = load_data_from_file(os.path.join(working_dir, 'train.txt'))
         self.num_data = self.data.size()[0]
         self.sequence_length = self.data.size()[1]
 
@@ -30,7 +32,8 @@ class DataLoader:
             return None
 
     def generate_random_data(self):
-        '''Generates a random tensor. Used for initialization'''
+        '''Generates a random tensor with the same shape as training data.
+        Used for initialization'''
         m = Binomial(1, torch.zeros((self.cfg.batch_size, self.sequence_length)).fill_(0.5))
         return m.sample().to(device)
 

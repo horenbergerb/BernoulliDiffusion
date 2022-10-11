@@ -1,36 +1,11 @@
 import torch
 from torch import nn
 from torch.distributions import Binomial
-import torch.optim as optim
-from numpy.random import default_rng
-import numpy as np
 
 from BernoulliDiffusion.utils.math_utils import kl_div, entropy_of_q_conditional, entropy_of_prior
-
-rng = default_rng()
+from BernoulliDiffusion.reverse_model import ReverseModel
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-
-
-class ReverseModel(nn.Module):
-    def __init__(self, sequence_length, T):
-        super().__init__()
-
-        self.shared_layers = torch.nn.Sequential(
-            torch.nn.Linear(sequence_length, 50),
-            torch.nn.ReLU(),
-            torch.nn.Linear(50, 50),
-            torch.nn.ReLU()
-        )
-
-        self.output_layers = nn.ModuleList([torch.nn.Linear(50, sequence_length) for x in range(T)])
-        self.outputs_sigmoid = torch.nn.Sigmoid()
-
-    def forward(self, x, t):
-        x = self.shared_layers(x)
-        x = self.output_layers[t-1](x)
-        x = self.outputs_sigmoid(x)
-        return x
 
 
 class BernoulliDiffusionModel(nn.Module):
