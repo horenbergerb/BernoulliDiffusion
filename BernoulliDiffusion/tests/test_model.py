@@ -3,20 +3,20 @@ import torch
 import unittest
 import statistics
 
-from BernoulliDiffusion.data import DataLoader
-from BernoulliDiffusion.model import ReverseModel, BernoulliDiffusionModel
+from BernoulliDiffusion.data_loader import DataLoader
+from BernoulliDiffusion.diffusion_model import BernoulliDiffusionModel
 from BernoulliDiffusion.config import load_config
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
             
 class TestBinomialDiffusion(unittest.TestCase):
-    '''Tests functions from the data.py file'''
+    '''Tests functions from the model.py file'''
 
     def setUp(self):
         '''This is done at the start of every test'''
         self.model_cfg, self.training_cfg, self.data_cfg = load_config('BernoulliDiffusion/tests/test_config.yaml')
-        self.data_loader = DataLoader(self.data_cfg)
+        self.data_loader = DataLoader('BernoulliDiffusion/tests/test_data/', self.data_cfg)
         self.sequence_length = self.data_loader.get_sequence_length()
 
         self.diffusion_model = BernoulliDiffusionModel(self.sequence_length,
@@ -59,7 +59,6 @@ class TestBinomialDiffusion(unittest.TestCase):
 
         err_msg = 'beta_tilde_t: {}, {} and {} are not almost equal'.format(beta_tilde_t, result, expectation)
         self.assertAlmostEqual(statistics.fmean(results), expectation, 4, err_msg)
-
             
     def test_sampling_methods_agree(self):
         '''The proportion of digits which are 1 should be approximately equivalent whether we iterate sampling
@@ -75,8 +74,6 @@ class TestBinomialDiffusion(unittest.TestCase):
             while x_0 is not None:
                 result1 = x_0
                 for t in range(0, target_t):
-                    # print('beta_tilde_{}: {}'.format(t, diffusion_model.beta_tilde_t[t][0].item()))
-                    # print('beta_t_{}: {}'.format(t, diffusion_model.beta_t(t)))
                     result1 = self.diffusion_model.q_step(result1, t)
 
                 result2 = self.diffusion_model.q_sample(x_0, target_t)
@@ -87,7 +84,6 @@ class TestBinomialDiffusion(unittest.TestCase):
                 results2.append(result2)
                 x_0 = self.data_loader.next_minibatch()
 
-        
         err_msg = '{} and {} are not almost equal'.format(statistics.fmean(results1), statistics.fmean(results2))
         self.assertAlmostEqual(statistics.fmean(results1), statistics.fmean(results2), 3, err_msg)
                         

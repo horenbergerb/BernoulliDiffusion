@@ -12,6 +12,7 @@ def kl_div_single_bernoulli_distributions(p1, p2):
     return (p1 * torch.log2(p1/p2)) + ((1-p1) * torch.log2((1-p1)/(1-p2)))
 
 class TestMathUtils(unittest.TestCase):
+    '''Tests functions from the math_utils.py file'''
 
     def test_known_values_of_entropy_of_prior(self):
         '''Entropy of the prior when the prob of each Bernoulli
@@ -69,10 +70,13 @@ class TestMathUtils(unittest.TestCase):
         real_answer = np.array([0.0, 0.0])
         self.assertTrue(np.array_equal(div, real_answer))
 
+        # testing an actual calculation with multiple samples where the kl_div is not 0
         div = kl_div(torch.Tensor([[0.4], [0.8]]), torch.Tensor([[0.8], [0.4]]))
         real_answer1 = kl_div_single_bernoulli_distributions(0.4, 0.8)
         real_answer2 = kl_div_single_bernoulli_distributions(0.8, 0.4)
         real_answer = torch.hstack([real_answer1, real_answer2])
-        print(real_answer)
-        print(div)
         self.assertTrue(torch.equal(div, real_answer))
+
+
+if __name__ == '__main__':
+    unittest.main()
