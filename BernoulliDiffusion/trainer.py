@@ -9,7 +9,6 @@ import json
 from BernoulliDiffusion.utils.plotting_utils import plot_loss, plot_evolution, plot_validation_proportions
 
 import os
-os.environ["CUDA_LAUNCH_BLOCKING"] = "1"
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -30,7 +29,7 @@ class Trainer:
         self.initialize_output_dir_()
         self.initialize_new_training_()
 
-        self.example_seed = self.data_loader.generate_random_data()
+        self.example_seed = self.data_loader.generate_random_data(self.cfg.num_examples)
 
 
     def initialize_output_dir_(self):
@@ -69,6 +68,8 @@ class Trainer:
         while batch is not None:
             self.optimizer.zero_grad()
             output = self.diffusion_model(batch)
+            if torch.isnan(output):
+                raise Exception('Loss is NaN. Is your learning rate too high?')
             output.backward()
             torch.nn.utils.clip_grad_norm_(self.diffusion_model.parameters(), self.cfg.clip_thresh)
             self.optimizer.step()
@@ -105,9 +106,9 @@ class Trainer:
             json.dump(results, fp)
 
     def make_plots_(self):
-        epochs_plotted = [x * self.cfg.training_info_freq for x in range(0, self.cfg.epochs//self.cfg.training_info_freq)]
+        epochs_plotted = [x for x in range(0, self.cfg.epochs)]
         plot_loss(epochs_plotted,
-                  self.losses[::self.cfg.training_info_freq],
+                  self.losses,
                   self.result_dir)
         numpy_examples = [x.cpu().detach().numpy() for x in self.examples_per_epoch]
         plot_evolution(epochs_plotted,

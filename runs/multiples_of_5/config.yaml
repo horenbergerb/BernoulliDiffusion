@@ -1,0 +1,25 @@
+model:
+  # The quantity of steps in the diffusion process
+  T: 2000
+  # Quantity of samples to use when approximating the loss
+  num_sample_steps: 30
+
+training:
+  # Quantity of training epochs
+  epochs: 100
+  # Learning rate
+  lr: 0.0003
+  # How frequently to checkpoint the model
+  save_every_n_epochs: 1
+  # The quantity of examples to use when generating the evolution gif
+  num_examples: 10
+  # The total quantity of samples to use when validating the model
+  num_val_samples: 1024
+  # the quantity of samples to take at a time when validating the model
+  val_batch_size: 64
+  # The threshold for grad_clip_norm
+  clip_thresh: 1.0
+
+data:
+  # Quantity of training samples per batch
+  batch_size: 2048

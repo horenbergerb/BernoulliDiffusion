@@ -7,6 +7,7 @@ from BernoulliDiffusion.reverse_model import ReverseModel
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
+print('Using device {}'.format(device))
 
 class BernoulliDiffusionModel(nn.Module):
     def __init__(self, sequence_length, num_sample_steps, T):
@@ -45,6 +46,8 @@ class BernoulliDiffusionModel(nn.Module):
         if x is None:
             init_prob = torch.empty((batch_size, self.sequence_length)).fill_(0.5).to(device)
             x = torch.bernoulli(init_prob)
+        else:
+            assert batch_size == x.size(dim=0)
 
         for cur_t in range(self.T, 0, -1):
             x = torch.bernoulli(self.p_conditional_prob(x, cur_t))
