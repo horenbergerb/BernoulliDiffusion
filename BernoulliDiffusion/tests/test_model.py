@@ -40,25 +40,25 @@ class TestBinomialDiffusion(unittest.TestCase):
         p(0->1): (1 - 1/period)*(0.5*beta_tilde_t)
         p(1) for digits of x_t = ((1/period)*(1-0.5*beta_tilde_t)) + ((1 - 1/period)(0.5*beta_tilde_t))'''
 
-        target_t = 1000
-        period = 100
-        prob_1 = 1/period
+        for target_t in [250, 500, 1000, 150]:
+            period = 100
+            prob_1 = 1/period
 
-        beta_tilde_t = self.diffusion_model.beta_tilde_t[target_t][0].item()
-        expectation = (prob_1*(1.0-0.5*beta_tilde_t)) + ((1-prob_1)*(0.5*beta_tilde_t))
-        results = []
+            beta_tilde_t = self.diffusion_model.beta_tilde_t[target_t][0].item()
+            expectation = (prob_1*(1.0-0.5*beta_tilde_t)) + ((1-prob_1)*(0.5*beta_tilde_t))
+            results = []
 
-        for cur_sample in range(10000):
-            x_0 = self.data_loader.next_minibatch()
-            while x_0 is not None:
-                result = self.diffusion_model.q_sample(x_0, target_t)
-                result = torch.mean(result).item()
-                results.append(result)
+            for cur_sample in range(10000):
                 x_0 = self.data_loader.next_minibatch()
+                while x_0 is not None:
+                    result = self.diffusion_model.q_sample(x_0, target_t)
+                    result = torch.mean(result).item()
+                    results.append(result)
+                    x_0 = self.data_loader.next_minibatch()
 
 
-        err_msg = 'beta_tilde_t: {}, {} and {} are not almost equal'.format(beta_tilde_t, result, expectation)
-        self.assertAlmostEqual(statistics.fmean(results), expectation, 4, err_msg)
+            err_msg = 'beta_tilde_t: {}, {} and {} are not almost equal'.format(beta_tilde_t, result, expectation)
+            self.assertAlmostEqual(statistics.fmean(results), expectation, 4, err_msg)
             
     def test_sampling_methods_agree(self):
         '''The proportion of digits which are 1 should be approximately equivalent whether we iterate sampling
