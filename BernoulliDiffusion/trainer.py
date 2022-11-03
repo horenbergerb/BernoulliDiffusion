@@ -22,7 +22,7 @@ class Trainer:
         self.data_loader = data_loader
         self.validator = validator
 
-        self.optimizer = optim.Adam(diffusion_model.parameters(), lr=cfg.lr, betas=(0.9, 0.999), eps=1e-08, weight_decay=0, amsgrad=False)
+        self.optimizer = optim.AdamW(diffusion_model.parameters(), lr=cfg.lr, betas=(0.9, 0.999), eps=1e-08, weight_decay=0, amsgrad=False)
 
         self.result_dir = None
 

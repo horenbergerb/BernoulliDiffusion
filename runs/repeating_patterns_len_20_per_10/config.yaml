@@ -6,7 +6,7 @@ model:
 
 training:
   # Quantity of training epochs
-  epochs: 500
+  epochs: 200
   # Learning rate
   lr: 0.005
   # How frequently to checkpoint the model
@@ -21,5 +21,5 @@ training:
   clip_thresh: 1.0
 
 data:
-  # Quantity of training samples per batch
+  # Quantity of training samples per minibatch
   batch_size: 2048

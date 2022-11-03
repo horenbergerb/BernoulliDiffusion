@@ -88,7 +88,9 @@ class BernoulliDiffusionModel(nn.Module):
             x_t = self.q_sample(x_0, t)
             beta_t = self.beta_t(t)
             posterior = x_0*(1-self.beta_tilde_t[t-1]) + 0.5*self.beta_tilde_t[t-1]
-            posterior *= x_t * (1-0.5*beta_t) + (1 - x_t) * (1.5*beta_t)
+            posterior *= x_t * (1-0.5*beta_t) + (1 - x_t) * (0.5*beta_t)
+            normalizing_constant = x_t * self.q_conditional_prob_wrt_x_0(x_0, t) + (1-x_t) * (1-self.q_conditional_prob_wrt_x_0(x_0, t))
+            posterior = posterior / normalizing_constant
             kl_divergence = kl_div(posterior,
                                    self.p_conditional_prob(x_t, t))
 
