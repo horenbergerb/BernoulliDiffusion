@@ -72,6 +72,10 @@ The second visualization is a demonstration of samples produced by the same seed
 
 ![](docs/sample_evolution_throughout_training.gif)
 
+The third visualization depics a rudimentary kind of validation. Given a large number of generated samples, it shows what proportion of them are from the training data, validation data, or neither. In this depiction, the proportions converge on 95/5/0, respectively, which matches the train/validate split perfectly. In other words, we trained a model which properly generalized.
+
+![](docs/validation.png)
+
 ### Unit Tests
 
 You can run unit tests from the root directory with the following commands:

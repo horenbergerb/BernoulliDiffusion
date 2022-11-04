@@ -6,7 +6,7 @@ model:
 
 training:
   # Quantity of training epochs
-  epochs: 200
+  epochs: 100
   # Learning rate
   lr: 0.005
   # How frequently to checkpoint the model
