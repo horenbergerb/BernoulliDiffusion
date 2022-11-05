@@ -31,6 +31,8 @@ class Trainer:
 
         self.example_seed = self.data_loader.generate_random_data(self.cfg.num_examples)
 
+        self.exit_signal_received = False
+
 
     def initialize_output_dir_(self):
         '''Creates the file where results of training will be stored'''
@@ -106,7 +108,7 @@ class Trainer:
             json.dump(results, fp)
 
     def make_plots_(self):
-        epochs_plotted = [x for x in range(0, self.cfg.epochs)]
+        epochs_plotted = [x for x in range(0, self.epoch + 1)]
         plot_loss(epochs_plotted,
                   self.losses,
                   self.result_dir)
@@ -120,6 +122,11 @@ class Trainer:
                                     self.proportions,
                                     self.result_dir)
 
+    def finish(self):
+        torch.save(self.diffusion_model, os.path.join(self.result_dir, 'checkpoints', 'model_epoch_{}.pt'.format(self.epoch)))
+        self.dump_data_to_json_()
+        self.make_plots_()
+
     def train(self):
         for self.epoch in range(0, self.cfg.epochs):
             self.train_step_()
@@ -127,9 +134,9 @@ class Trainer:
             self.print_training_info_()
             if self.epoch%self.cfg.save_every_n_epochs == 0 and self.epoch > 0:
                 torch.save(self.diffusion_model, os.path.join(self.result_dir, 'checkpoints', 'model_epoch_{}.pt'.format(self.epoch)))
-        
-        torch.save(self.diffusion_model, os.path.join(self.result_dir, 'checkpoints', 'model_epoch_{}.pt'.format(self.epoch)))
-        self.dump_data_to_json_()
-        self.make_plots_()
+            if self.exit_signal_received:
+                break
+
+        self.finish()
 
         return self.diffusion_model

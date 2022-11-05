@@ -1,8 +1,9 @@
-from numpy import diff
 import torch
 
+import signal
 import yaml
 import os
+import sys
 import shutil
 
 from BernoulliDiffusion.config import load_config
@@ -10,9 +11,6 @@ from BernoulliDiffusion.data_loader import DataLoader
 from BernoulliDiffusion.diffusion_model import BernoulliDiffusionModel
 from BernoulliDiffusion.trainer import Trainer
 from BernoulliDiffusion.validator import Validator
-
-import sys
-import os
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -46,9 +44,10 @@ if __name__ == '__main__':
     trainer = Trainer(working_dir, training_cfg, diffusion_model, data_loader, validator)
     save_config(working_dir, trainer.get_output_dir())
 
+    def exit_signal_handler(sig, frame):
+        print('Ctrl+C detected; finishing epoch and terminating...')
+        trainer.exit_signal_received = True
+
+    signal.signal(signal.SIGINT, exit_signal_handler)
+
     diffusion_model = trainer.train()
-    
-    print('Batch of 10 samples from reverse trajectory after training:')
-    post_sample = diffusion_model.p_sample(10)
-    print(post_sample)
-    print('Percent of sample digits which are 1: {}'.format(post_sample.sum()/torch.numel(post_sample)))
