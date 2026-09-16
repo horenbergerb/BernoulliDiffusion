@@ -18,6 +18,7 @@ class TrainingConfig:
     save_every_n_epochs: int
     clip_thresh: float
     validate_every_n_epochs: int = 100
+    examples_every_n_epochs: int = 10
 
 
 @dataclass

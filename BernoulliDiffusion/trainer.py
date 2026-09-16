@@ -57,6 +57,7 @@ class Trainer:
         # reset all metrics of training
         self.losses = []
         self.examples_per_epoch = []
+        self.example_epochs = []
 
         self.proportions = {'train': [], 'val':[], 'other':[]}
         self.val_epochs = []
@@ -83,9 +84,11 @@ class Trainer:
 
     def log_data_(self):
         '''Calculate and store various values of interest. Done after each epoch.'''
-        post_sample = self.diffusion_model.p_sample(self.cfg.num_examples, self.example_seed)
-        self.examples_per_epoch.append(post_sample)
-        if self.validator is not None and self.is_validation_epoch_():
+        if self.is_periodic_epoch_(self.cfg.examples_every_n_epochs):
+            self.example_epochs.append(self.epoch)
+            post_sample = self.diffusion_model.p_sample(self.cfg.num_examples, self.example_seed)
+            self.examples_per_epoch.append(post_sample)
+        if self.validator is not None and self.is_periodic_epoch_(self.cfg.validate_every_n_epochs):
             self.val_epochs.append(self.epoch)
             train_count, val_count, other_count = self.validator.validate(self.diffusion_model,
                                                                           self.cfg.num_val_samples,
@@ -94,9 +97,10 @@ class Trainer:
             self.proportions['val'].append(val_count/self.cfg.num_val_samples)
             self.proportions['other'].append(other_count/self.cfg.num_val_samples)
 
-    def is_validation_epoch_(self):
-        '''Validation samples the full reverse process many times, so it only runs periodically and on the final epoch'''
-        return (self.epoch + 1) % self.cfg.validate_every_n_epochs == 0 or self.epoch == self.cfg.epochs - 1
+    def is_periodic_epoch_(self, every_n_epochs):
+        '''Sampling runs the full reverse process, so validation and examples are only
+        produced every n epochs and on the final epoch'''
+        return (self.epoch + 1) % every_n_epochs == 0 or self.epoch == self.cfg.epochs - 1
 
     def print_training_info_(self):
         info = 'Epoch: {}: Loss: {}'.format(self.epoch, self.losses[-1])
@@ -108,6 +112,7 @@ class Trainer:
     def dump_data_to_json_(self):
         results = {'losses': self.losses,
                    'examples_per_epoch': [x.tolist() for x in self.examples_per_epoch],
+                   'example_epochs': self.example_epochs,
                    'proportions': self.proportions,
                    'val_epochs': self.val_epochs}
         with open(os.path.join(self.result_dir, 'results.json'), 'w') as fp:
@@ -119,7 +124,7 @@ class Trainer:
                   self.losses,
                   self.result_dir)
         numpy_examples = [x.cpu().detach().numpy() for x in self.examples_per_epoch]
-        plot_evolution(epochs_plotted,
+        plot_evolution(self.example_epochs,
                        numpy_examples,
                        self.result_dir,
                        step_name = 'Epoch',

@@ -13,6 +13,8 @@ training:
   save_every_n_epochs: 10
   # How frequently to run validation (it is also run on the final epoch)
   validate_every_n_epochs: 100
+  # How frequently to generate examples for the evolution gif (they are also generated on the final epoch)
+  examples_every_n_epochs: 10
   # The quantity of examples to print during training
   num_examples: 10
   # The total quantity of samples to use when validating the model
