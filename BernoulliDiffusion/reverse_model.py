@@ -5,7 +5,7 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
 class ReverseModel(nn.Module):
-    def __init__(self, sequence_length, T):
+    def __init__(self, sequence_length, T, skip_init=5.0):
         super().__init__()
 
         self.shared_layers = torch.nn.Sequential(
@@ -18,8 +18,13 @@ class ReverseModel(nn.Module):
         self.output_layers = nn.ModuleList([torch.nn.Linear(50, sequence_length) for x in range(T)])
         self.outputs_sigmoid = torch.nn.Sigmoid()
 
+        # Skip connection: each reverse step is nearly the identity (bit flip probabilities are ~1/T),
+        # which the MLP can't represent through its bottleneck. A learned per-step scale on x_t makes
+        # copying the input the default, so the network only has to learn corrections.
+        # skip_init=5.0 starts each step at sigmoid(5) ~= 99.3% probability of keeping each bit.
+        self.skip_scale = nn.Parameter(torch.full((T,), skip_init))
+
     def forward(self, x, t):
-        x = self.shared_layers(x)
-        x = self.output_layers[t-1](x)
-        x = self.outputs_sigmoid(x)
-        return x
+        logits = self.output_layers[t-1](self.shared_layers(x))
+        logits = logits + self.skip_scale[t-1] * (2.0 * x - 1.0)
+        return self.outputs_sigmoid(logits)
