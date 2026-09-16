@@ -7,7 +7,7 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
 class ReverseModel(nn.Module):
-    def __init__(self, sequence_length, T, hidden_size=50, time_features=32, skip_init=5.0):
+    def __init__(self, sequence_length, T, hidden_size=50, num_hidden_layers=2, time_features=32, skip_init=5.0):
         super().__init__()
 
         self.T = T
@@ -22,11 +22,10 @@ class ReverseModel(nn.Module):
         )
 
         self.input_layer = torch.nn.Linear(sequence_length, hidden_size)
-        self.shared_layers = torch.nn.Sequential(
-            torch.nn.ReLU(),
-            torch.nn.Linear(hidden_size, hidden_size),
-            torch.nn.ReLU()
-        )
+        hidden_layers = []
+        for _ in range(num_hidden_layers - 1):
+            hidden_layers += [torch.nn.ReLU(), torch.nn.Linear(hidden_size, hidden_size)]
+        self.shared_layers = torch.nn.Sequential(*hidden_layers, torch.nn.ReLU())
         self.output_layer = torch.nn.Linear(hidden_size, sequence_length)
         self.outputs_sigmoid = torch.nn.Sigmoid()
 

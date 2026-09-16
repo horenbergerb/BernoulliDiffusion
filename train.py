@@ -41,7 +41,9 @@ if __name__ == '__main__':
 
     diffusion_model = BernoulliDiffusionModel(sequence_length,
                                               model_cfg.num_sample_steps,
-                                              model_cfg.T).to(device)
+                                              model_cfg.T,
+                                              model_cfg.hidden_size,
+                                              model_cfg.num_hidden_layers).to(device)
 
     trainer = Trainer(working_dir, training_cfg, diffusion_model, data_loader, validator)
     save_config(working_dir, trainer.get_output_dir())

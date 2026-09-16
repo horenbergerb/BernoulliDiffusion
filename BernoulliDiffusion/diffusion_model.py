@@ -10,10 +10,10 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 print('Using device {}'.format(device))
 
 class BernoulliDiffusionModel(nn.Module):
-    def __init__(self, sequence_length, num_sample_steps, T):
+    def __init__(self, sequence_length, num_sample_steps, T, hidden_size=50, num_hidden_layers=2):
         super().__init__()
 
-        self.model = ReverseModel(sequence_length, T).to(device)
+        self.model = ReverseModel(sequence_length, T, hidden_size, num_hidden_layers).to(device)
         
         self.sequence_length = sequence_length
         self.num_sample_steps = num_sample_steps

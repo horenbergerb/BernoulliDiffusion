@@ -6,6 +6,8 @@ import yaml
 class ModelConfig:
     T: int
     num_sample_steps: int
+    hidden_size: int = 50
+    num_hidden_layers: int = 2
 
 
 @dataclass
