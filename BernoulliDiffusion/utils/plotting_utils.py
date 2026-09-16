@@ -14,7 +14,7 @@ def plot_loss(epochs, losses, save_dir, filename='loss_curve.png'):
 
 def plot_validation_proportions(epochs, proportions, save_dir, filename='validation.png'):
     for key, item in proportions.items():
-        plt.plot(epochs, item, label=key)
+        plt.plot(epochs, item, label=key, marker='o')
     plt.title('Validation Proportions')
     plt.xlabel('Epoch')
     plt.ylabel('Proportion')

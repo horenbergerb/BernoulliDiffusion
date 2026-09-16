@@ -11,6 +11,8 @@ training:
   lr: 0.0003
   # How frequently to checkpoint the model
   save_every_n_epochs: 1
+  # How frequently to run validation (it is also run on the final epoch)
+  validate_every_n_epochs: 100
   # The quantity of examples to use when generating the evolution gif
   num_examples: 10
   # The total quantity of samples to use when validating the model

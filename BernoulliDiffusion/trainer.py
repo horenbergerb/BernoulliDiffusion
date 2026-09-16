@@ -59,6 +59,7 @@ class Trainer:
         self.examples_per_epoch = []
 
         self.proportions = {'train': [], 'val':[], 'other':[]}
+        self.val_epochs = []
 
     def train_step_(self):
         '''Actual training occurs here'''
@@ -84,7 +85,8 @@ class Trainer:
         '''Calculate and store various values of interest. Done after each epoch.'''
         post_sample = self.diffusion_model.p_sample(self.cfg.num_examples, self.example_seed)
         self.examples_per_epoch.append(post_sample)
-        if self.validator is not None:
+        if self.validator is not None and self.is_validation_epoch_():
+            self.val_epochs.append(self.epoch)
             train_count, val_count, other_count = self.validator.validate(self.diffusion_model,
                                                                           self.cfg.num_val_samples,
                                                                           self.cfg.val_batch_size)
@@ -92,16 +94,22 @@ class Trainer:
             self.proportions['val'].append(val_count/self.cfg.num_val_samples)
             self.proportions['other'].append(other_count/self.cfg.num_val_samples)
 
+    def is_validation_epoch_(self):
+        '''Validation samples the full reverse process many times, so it only runs periodically and on the final epoch'''
+        return (self.epoch + 1) % self.cfg.validate_every_n_epochs == 0 or self.epoch == self.cfg.epochs - 1
+
     def print_training_info_(self):
-        print('Epoch: {}: Loss: {} Train Proportion: {} Val Proportion: {}'.format(self.epoch,
-                                                                                   self.losses[-1],
-                                                                                   self.proportions['train'][-1],
-                                                                                   self.proportions['val'][-1]))
+        info = 'Epoch: {}: Loss: {}'.format(self.epoch, self.losses[-1])
+        if self.val_epochs and self.val_epochs[-1] == self.epoch:
+            info += ' Train Proportion: {} Val Proportion: {}'.format(self.proportions['train'][-1],
+                                                                       self.proportions['val'][-1])
+        print(info)
 
     def dump_data_to_json_(self):
         results = {'losses': self.losses,
                    'examples_per_epoch': [x.tolist() for x in self.examples_per_epoch],
-                   'proportions': self.proportions}
+                   'proportions': self.proportions,
+                   'val_epochs': self.val_epochs}
         with open(os.path.join(self.result_dir, 'results.json'), 'w') as fp:
             json.dump(results, fp)
 
@@ -116,9 +124,10 @@ class Trainer:
                        self.result_dir,
                        step_name = 'Epoch',
                        filename='sample_evolution_throughout_training.gif')
-        plot_validation_proportions(epochs_plotted,
-                                    self.proportions,
-                                    self.result_dir)
+        if self.val_epochs:
+            plot_validation_proportions(self.val_epochs,
+                                        self.proportions,
+                                        self.result_dir)
 
     def train(self):
         for self.epoch in range(0, self.cfg.epochs):

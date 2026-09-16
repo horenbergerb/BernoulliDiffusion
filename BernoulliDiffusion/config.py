@@ -17,6 +17,7 @@ class TrainingConfig:
     val_batch_size: int
     save_every_n_epochs: int
     clip_thresh: float
+    validate_every_n_epochs: int = 100
 
 
 @dataclass
