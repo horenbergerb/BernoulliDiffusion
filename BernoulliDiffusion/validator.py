@@ -11,10 +11,14 @@ class Validator:
         self.working_dir = working_dir
         self.cfg = cfg
 
-    def validate(self, model, num_samples, batch_size):
-        train_data = load_data_from_file(os.path.join(self.working_dir, 'train.txt')).cpu().detach().numpy().tolist()
-        val_data = load_data_from_file(os.path.join(self.working_dir, 'val.txt')).cpu().detach().numpy().tolist()
+        # sets make membership checks constant time; lists took ~10ms per sample on large datasets
+        self.train_data = self.load_as_set_(os.path.join(self.working_dir, 'train.txt'))
+        self.val_data = self.load_as_set_(os.path.join(self.working_dir, 'val.txt'))
 
+    def load_as_set_(self, data_dir):
+        return {tuple(x) for x in load_data_from_file(data_dir).cpu().detach().numpy().tolist()}
+
+    def validate(self, model, num_samples, batch_size):
         train_count = 0
         val_count = 0
         other_count = 0
@@ -24,9 +28,10 @@ class Validator:
             samples = model.p_sample(batch_size).cpu().detach().numpy().tolist()
 
             for sample in samples:
-                if sample in train_data:
+                sample = tuple(sample)
+                if sample in self.train_data:
                     train_count += 1
-                elif sample in val_data:
+                elif sample in self.val_data:
                     val_count += 1
                 else:
                     other_count += 1
@@ -35,5 +40,4 @@ class Validator:
                     break
 
         return train_count, val_count, other_count
-
 
