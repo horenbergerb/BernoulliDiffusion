@@ -79,20 +79,28 @@ class BernoulliDiffusionModel(nn.Module):
         '''Returns a sample x_t given input x_0'''
         return torch.bernoulli(self.q_conditional_prob_wrt_x_0(x_0, t))
     
+    def posterior(self, x_0, x_t, t):
+        '''Returns the probabilities of the Bernoulli variables for the forward process posterior,
+        i.e. q(x_(t-1)|x_t, x_0). t may be an int or a tensor with one timestep per example.'''
+        if torch.is_tensor(t):
+            beta_t = self.beta_t(t).unsqueeze(1)
+        else:
+            beta_t = self.beta_t(t)
+        posterior = x_0*(1-self.beta_tilde_t[t-1]) + 0.5*self.beta_tilde_t[t-1]
+        posterior = posterior * (x_t * (1-0.5*beta_t) + (1 - x_t) * (0.5*beta_t))
+        normalizing_constant = x_t * self.q_conditional_prob_wrt_x_0(x_0, t) + (1-x_t) * (1-self.q_conditional_prob_wrt_x_0(x_0, t))
+        return posterior / normalizing_constant
+
     def forward(self, x_0):
         '''Approximates the loss via equation 13 in Deep Unsupervised Learning using Nonequilibrium Thermodynamics
         using samples from the reverse process.'''
-        # the monte carlo sampling is performed using the minibatch
-        total_loss = torch.zeros((x_0.size(dim=0),)).to(device)
-        for t in range(1, self.T + 1):
-            x_t = self.q_sample(x_0, t)
-            beta_t = self.beta_t(t)
-            posterior = x_0*(1-self.beta_tilde_t[t-1]) + 0.5*self.beta_tilde_t[t-1]
-            posterior *= x_t * (1-0.5*beta_t) + (1 - x_t) * (0.5*beta_t)
-            normalizing_constant = x_t * self.q_conditional_prob_wrt_x_0(x_0, t) + (1-x_t) * (1-self.q_conditional_prob_wrt_x_0(x_0, t))
-            posterior = posterior / normalizing_constant
-            kl_divergence = kl_div(posterior,
-                                   self.p_conditional_prob(x_t, t))
+        # Rather than summing the KL term over all T timesteps, sample one timestep per example
+        # and scale by T. This is an unbiased estimate of the sum at the cost of one reverse model
+        # evaluation instead of T.
+        t = torch.randint(1, self.T + 1, (x_0.size(dim=0),), device=x_0.device)
+        x_t = self.q_sample(x_0, t)
+        kl_divergence = kl_div(self.posterior(x_0, x_t, t),
+                               self.p_conditional_prob(x_t, t))
 
-            total_loss += kl_divergence + self.H_start - self.H_end + self.H_prior
+        total_loss = self.T * (kl_divergence + self.H_start - self.H_end + self.H_prior)
         return torch.mean(total_loss)
