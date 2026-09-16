@@ -105,7 +105,8 @@ class BernoulliDiffusionModel(nn.Module):
         posterior = x_0*(1-self.beta_tilde_t[t-1]) + 0.5*self.beta_tilde_t[t-1]
         posterior = posterior * (x_t * (1-0.5*beta_t) + (1 - x_t) * (0.5*beta_t))
         normalizing_constant = x_t * self.q_conditional_prob_wrt_x_0(x_0, t) + (1-x_t) * (1-self.q_conditional_prob_wrt_x_0(x_0, t))
-        return posterior / normalizing_constant
+        # clamp float rounding error, since this can be sampled from directly when predicting x_0
+        return torch.clamp(posterior / normalizing_constant, 0.0, 1.0)
 
     def forward(self, x_0):
         '''Approximates the loss via equation 13 in Deep Unsupervised Learning using Nonequilibrium Thermodynamics
