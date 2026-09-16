@@ -8,6 +8,8 @@ class ModelConfig:
     num_sample_steps: int
     hidden_size: int = 50
     num_hidden_layers: int = 2
+    predict_x0: bool = False
+    x0_loss_weight: float = 0.0
 
 
 @dataclass

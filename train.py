@@ -43,7 +43,9 @@ if __name__ == '__main__':
                                               model_cfg.num_sample_steps,
                                               model_cfg.T,
                                               model_cfg.hidden_size,
-                                              model_cfg.num_hidden_layers).to(device)
+                                              model_cfg.num_hidden_layers,
+                                              model_cfg.predict_x0,
+                                              model_cfg.x0_loss_weight).to(device)
 
     trainer = Trainer(working_dir, training_cfg, diffusion_model, data_loader, validator)
     save_config(working_dir, trainer.get_output_dir())

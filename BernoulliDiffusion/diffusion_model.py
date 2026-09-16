@@ -10,7 +10,8 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 print('Using device {}'.format(device))
 
 class BernoulliDiffusionModel(nn.Module):
-    def __init__(self, sequence_length, num_sample_steps, T, hidden_size=50, num_hidden_layers=2):
+    def __init__(self, sequence_length, num_sample_steps, T, hidden_size=50, num_hidden_layers=2,
+                 predict_x0=False, x0_loss_weight=0.0):
         super().__init__()
 
         self.model = ReverseModel(sequence_length, T, hidden_size, num_hidden_layers).to(device)
@@ -19,6 +20,12 @@ class BernoulliDiffusionModel(nn.Module):
         self.num_sample_steps = num_sample_steps
 
         self.T = T
+
+        # If predict_x0 is set, the reverse model predicts the clean data x_0 rather than x_(t-1),
+        # and p(x_(t-1)|x_t) is obtained by averaging the exact posterior over that prediction.
+        # x0_loss_weight adds a cross-entropy term between the prediction and the true x_0.
+        self.predict_x0 = predict_x0
+        self.x0_loss_weight = x0_loss_weight
 
         # calculate the array of beta_tilde_t values from t=1 to t=T
         self.beta_tilde_t = [torch.zeros((self.sequence_length)).to(device)]
@@ -33,12 +40,21 @@ class BernoulliDiffusionModel(nn.Module):
     def p_conditional_prob(self, x_t, t):
         '''Returns the probabilities of the Bernoulli variables for the reverse process from t to t-1,
         i.e. p(x_(t-1)|x_t)'''
-        return self.model(x_t, t)
+        if not getattr(self, 'predict_x0', False):
+            return self.model(x_t, t)
+        return self.p_conditional_prob_from_x0(x_t, t, self.model(x_t, t))
+
+    def p_conditional_prob_from_x0(self, x_t, t, x0_prob):
+        '''Given per-bit probabilities that x_0 is 1, returns p(x_(t-1)|x_t) as the posterior
+        q(x_(t-1)|x_t, x_0) averaged over the predicted x_0'''
+        posterior_if_1 = self.posterior(torch.ones_like(x_t), x_t, t)
+        posterior_if_0 = self.posterior(torch.zeros_like(x_t), x_t, t)
+        return x0_prob * posterior_if_1 + (1.0 - x0_prob) * posterior_if_0
 
     @torch.no_grad()
     def p_step(self, x, t):
         '''Performs reverse process on x from t to t-1'''
-        return torch.bernoulli(self.model(x, t))
+        return torch.bernoulli(self.p_conditional_prob(x, t))
 
     @torch.no_grad()
     def p_sample(self, batch_size, x=None):
@@ -99,8 +115,15 @@ class BernoulliDiffusionModel(nn.Module):
         # evaluation instead of T.
         t = torch.randint(1, self.T + 1, (x_0.size(dim=0),), device=x_0.device)
         x_t = self.q_sample(x_0, t)
-        kl_divergence = kl_div(self.posterior(x_0, x_t, t),
-                               self.p_conditional_prob(x_t, t))
+        if self.predict_x0:
+            x0_prob = self.model(x_t, t)
+            p = self.p_conditional_prob_from_x0(x_t, t, x0_prob)
+        else:
+            p = self.p_conditional_prob(x_t, t)
+        kl_divergence = kl_div(self.posterior(x_0, x_t, t), p)
 
         total_loss = self.T * (kl_divergence + self.H_start - self.H_end + self.H_prior)
+        if self.predict_x0 and self.x0_loss_weight > 0:
+            # KL from the one-hot true x_0 equals the cross-entropy of the x_0 prediction (in bits)
+            total_loss = total_loss + self.x0_loss_weight * kl_div(x_0, x0_prob)
         return torch.mean(total_loss)
