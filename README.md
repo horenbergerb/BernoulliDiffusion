@@ -6,6 +6,28 @@ This is an implementation of the diffusion machine learning algorithm described 
 
 This model can be trained on any binary-valued data of fixed length. It will learn to generate samples which appear to be from the same distribution as the training data.
 
+## Update (2026)
+
+Training has been reworked to fix poor convergence. The main changes:
+
+* **Skip connection in the reverse model.** Each reverse step is nearly the identity (bit flip probabilities are on the order of 1/T), which the MLP could not represent. The output logits now include a learned, timestep-dependent multiple of `2*x_t - 1`, so copying the input is the default and the network learns corrections.
+* **One sampled timestep per example.** The loss used to sum the KL term over all T timesteps, costing T network evaluations per optimizer step. It now samples one timestep per example and scales by T, an unbiased estimate of the same sum at about 1/T of the cost. As a result, the per-timestep output layers were replaced by one network conditioned on sinusoidal timestep features.
+* **Optional x_0 prediction** (`predict_x0`). The network predicts the clean data x_0, and each reverse step is the exact forward process posterior q(x_(t-1) | x_t, x_0) averaged over that prediction. An optional cross-entropy loss on the prediction (`x0_loss_weight`) gives a direct training signal.
+* **Faster bookkeeping.** Validation and the evolution gif are generated periodically instead of every epoch, and the validator loads its data once into sets.
+
+On `runs/repeating_patterns_len_20_per_10` (loss is the full negative ELBO in bits per sample with constants removed; a perfect model scores log2(973) = 9.93):
+
+| Version | Loss (bits) | Invalid samples | Patterns generated (of 1024) | Held-out patterns generated (of 51) |
+|---|---|---|---|---|
+| Original | 227 | 0.3% (collapsed onto a subset) | 677 | 25 |
+| All changes, `predict_x0` on | 10.2 | 0.7% | 1013 | 51 |
+
+Results are from a single run and vary slightly between runs (a second run of the same config ended at 10.1 bits, 1.4% invalid, 1015 patterns, 50 held-out patterns).
+
+The example configs in `runs/` have been updated for the new training scheme. `runs/heartbeat_len_20_per_5` trains to 100% valid samples in about two minutes on CPU, but with only 4 training examples it reproduces those 4 and never generates the held-out fifth pattern. Configs written for the old version will run, but epochs now contain far fewer network evaluations, so they need many more epochs (or a smaller batch size) to train well.
+
+`runs/multiples_of_5` is experimental and does not currently learn: divisibility by 5 only shows up in correlations among many bits at once, which the bit-flip noise erases except in the last few reverse steps.
+
 ## Setup
 
 Make sure to create a Python3 environment and install the requirements in requirements.txt:
@@ -30,6 +52,41 @@ python train.py runs/heartbeat_len_20_per_5
 
 The resulting model, its checkpoints, and training/validation data will be stored in runs/heartbeat_len_20_per_5/results/ under a timestamped directory.
 
+#### Configuration
+
+config.yaml has three sections. Options marked *(new)* were added in the 2026 update and are optional; the defaults reproduce the previous behavior where possible.
+
+**model**
+
+| Option | Default | Description |
+|---|---|---|
+| `T` | required | Number of diffusion steps |
+| `num_sample_steps` | required | Currently unused |
+| `hidden_size` *(new)* | 50 | Width of the reverse model's hidden layers |
+| `num_hidden_layers` *(new)* | 2 | Number of hidden layers in the reverse model |
+| `predict_x0` *(new)* | false | Predict the clean data x_0 and compute each reverse step from the exact posterior, instead of predicting the step directly |
+| `x0_loss_weight` *(new)* | 0.0 | Weight of the cross-entropy loss on the x_0 prediction (only used with `predict_x0`) |
+
+**training**
+
+| Option | Default | Description |
+|---|---|---|
+| `epochs` | required | Number of passes over the training data |
+| `lr` | required | Learning rate (AdamW) |
+| `save_every_n_epochs` | required | How often to save a checkpoint |
+| `validate_every_n_epochs` *(new)* | 100 | How often to run validation (also runs on the final epoch) |
+| `examples_every_n_epochs` *(new)* | 10 | How often to generate examples for the evolution gif (also on the final epoch) |
+| `num_examples` | required | Number of examples in the evolution gif |
+| `num_val_samples` | required | Number of samples generated for each validation |
+| `val_batch_size` | required | Batch size for generating validation samples |
+| `clip_thresh` | required | Gradient norm clipping threshold |
+
+**data**
+
+| Option | Default | Description |
+|---|---|---|
+| `batch_size` | required | Training minibatch size. Each optimizer step now costs one network evaluation per example, so smaller batches and more epochs are usually a better trade than before. |
+
 #### Preparing Training Data
 
 The training data stored in train.txt should satisfy the following criteria
@@ -43,7 +100,7 @@ The val.txt file satisfies identical criteria. It should only contain samples wh
 You can generate an arbitrary samples from the reverse process of a model using the following command:
 
 ```
-python generate.py runs/heartbeat_len_20_per_5/results/d_10_11_2022_t_17_20/checkpoints/model_epoch_29.pt 10
+python generate.py runs/heartbeat_len_20_per_5/results/d_10_11_2022_t_17_20/checkpoints/model_epoch_4999.pt 10
 ```
 
 This command generates 10 samples from one of the models trained on heartbeat data.
