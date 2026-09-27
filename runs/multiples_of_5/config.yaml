@@ -1,29 +1,39 @@
+# EXPERIMENTAL: this configuration does not currently learn the dataset. Samples stay at chance
+# (about 20% are multiples of 5). Divisibility by 5 only shows up in correlations among many bits
+# at once, which the bit-flip noise erases except in the last few steps of the reverse process.
 model:
   # The quantity of steps in the diffusion process
   T: 2000
   # Quantity of samples to use when approximating the loss
   num_sample_steps: 30
+  # Width and depth of the reverse model MLP (defaults 50 and 2)
+  hidden_size: 256
+  num_hidden_layers: 3
+  # Predict the clean data x_0 and derive each reverse step from it
+  predict_x0: true
+  # Weight of the cross-entropy loss on the x_0 prediction (0 disables it)
+  x0_loss_weight: 1.0
 
 training:
   # Quantity of training epochs
-  epochs: 100
+  epochs: 150
   # Learning rate
-  lr: 0.0003
+  lr: 0.003
   # How frequently to checkpoint the model
-  save_every_n_epochs: 1
+  save_every_n_epochs: 10
   # How frequently to run validation (it is also run on the final epoch)
-  validate_every_n_epochs: 100
+  validate_every_n_epochs: 5
   # How frequently to generate examples for the evolution gif (they are also generated on the final epoch)
-  examples_every_n_epochs: 10
+  examples_every_n_epochs: 5
   # The quantity of examples to use when generating the evolution gif
   num_examples: 10
   # The total quantity of samples to use when validating the model
   num_val_samples: 1024
   # the quantity of samples to take at a time when validating the model
-  val_batch_size: 64
+  val_batch_size: 1024
   # The threshold for grad_clip_norm
   clip_thresh: 1.0
 
 data:
   # Quantity of training samples per minibatch
-  batch_size: 2048
+  batch_size: 256
